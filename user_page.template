@@ -1,0 +1,10 @@
+<body>
+
+<h1>UNSW-Mate</h1>
+<h2><TMPL_VAR NAME="USERNAME"></h2>
+<p>
+   
+   
+</p>
+
+</body>
