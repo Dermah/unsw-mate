@@ -1,19 +1,30 @@
 <body>
 
-<h1>UNSW-Mate</h1>
-<h2><TMPL_VAR NAME="NAME"></h2>
-<img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" />
-<h3>User Info</h3>
-<p>
-   <ul>
-      <li>Gender: <TMPL_VAR NAME="GENDER"></li>
-      <li>Degree: <TMPL_VAR NAME="DEGREE"></li>
-   </ul>
-</p>
+<div id="user-page">
 
-<h3>Raw Details</h3>
-<p>
-   <TMPL_VAR NAME="DETAILS">
-</p>
+   <h1>UNSW-Mate</h1>
+
+   <div id="user-2col">
+      <div id="user-leftcol">
+         <img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" />
+      </div>
+      <div id="user-rightcol">
+         <h2><TMPL_VAR NAME="NAME"></h2>
+         <h3>User Info</h3>
+         <p>
+            <ul>
+               <li>Gender: <TMPL_VAR NAME="GENDER"></li>
+               <li>Degree: <TMPL_VAR NAME="DEGREE"></li>
+            </ul>
+         </p>
+
+         <h3>Raw Details</h3>
+         <p>
+            <TMPL_VAR NAME="DETAILS">
+         </p>
+      </div>
+   </div>
+
+</div>
 
 </body>

@@ -98,7 +98,7 @@ sub get_profile_pic ($) {
 #
 sub page_header () {
     return header,
-        start_html("-title"=>"UNSW Mate", -bgcolor=>"#FEDCBA"),
+        start_html(-title=>"UNSW Mate",-style=>{-src=>['/styles/style.css'],-media=>'all'});
 }
 
 #

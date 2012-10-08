@@ -1,25 +1,24 @@
 <body>
 
-<h1>UNSW-Mate</h1>
+<div id="home-page">
 
-<p>
-   Welcome to UNSW-Mate! Enter a username below to see if you know anyone on UNSW-Mate
-</p>
-<p>
-   <form method="GET" action="<TMPL_VAR NAME="URL">">
-      <input type="hidden" name="action" value="see_user" />
-      <input type="text" name="username" /> <br />
-   </form>
+   <h1 id="home-title">UNSW-Mate</h1>
+
+   <p id="home-speil">
+      Welcome to UNSW-Mate! Enter a <em>username</em> below to see if you know anyone on UNSW-Mate
+   </p>
+   <p id="home-formarea">
+      <form method="GET" action="<TMPL_VAR NAME="URL">">
+         <input type="hidden" name="action" value="see_user" />
+         <input type="text" name="username" id="home-searchbox" /> <br />
+      </form>
       OR <br />
-   <form method="GET" action="<TMPL_VAR NAME="URL">">
-      <input type="hidden" name="action" value="see_user">
-      
-      <button type="submit">See a Random User
+      <form method="GET" action="<TMPL_VAR NAME="URL">">
+         <input type="hidden" name="action" value="see_user">
+         <button type="submit" id="home-randombox">See a Random User</button>
+      </form>
+   </p>
 
-
-</button>
-      
-   </form>
-</p>
+</div>
 
 </body>
