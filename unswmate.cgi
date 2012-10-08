@@ -51,6 +51,21 @@ sub action_see_user() {
        $username =~ s/.*\///;
    }
    $template_variables{USERNAME} = $username;
+
+   my $details_filename = "$users_dir/$username/details.txt";
+   open my $p, "$details_filename" or die "can not open $details_filename: $!";
+   $details = join '', <$p>;
+   close $p;
+   @user_file = split "\n", $details;
+
+   $template_variables{DETAILS} = $details;
+   #return p,
+   #    start_form, "\n",
+   #    submit('Random UNSW Mate Page'), "\n",
+   #    pre($details),"\n",
+   #    end_form, "\n",
+   #    p, "\n";
+
    return "user_page";
 }
 
@@ -60,18 +75,7 @@ print page_trailer();
 exit 0; 
 
 
-sub browse_screen {
-    my $details_filename = "$users_dir/$username/details.txt";
-    open my $p, "$details_filename" or die "can not open $details_filename: $!";
-    $details = join '', <$p>;
-    close $p;
-    
-    return p,
-        start_form, "\n",
-        submit('Random UNSW Mate Page'), "\n",
-        pre($details),"\n",
-        end_form, "\n",
-        p, "\n";
+sub browse_screen($) {
 }
 
 #

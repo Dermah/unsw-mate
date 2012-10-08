@@ -1,0 +1,3 @@
+08/10/2012 18:00-18:20 Setup provided source code on CSE system
+08/10/2012 18:20-18:55 Setup new cgi script using templates instead
+08/10/2012 19:00-19:20 Almost level 0 profile page, created splash screen that welcomes user and leads to a random username
