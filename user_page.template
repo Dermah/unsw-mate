@@ -1,7 +1,16 @@
 <body>
 
 <h1>UNSW-Mate</h1>
-<h2><TMPL_VAR NAME="USERNAME"></h2>
+<h2><TMPL_VAR NAME="NAME"></h2>
+<h3>User Info</h3>
+<p>
+   <ul>
+      <li>Gender: <TMPL_VAR NAME="GENDER"></li>
+      <li>Degree: <TMPL_VAR NAME="DEGREE"></li>
+   </ul>
+</p>
+
+<h3>Raw Details</h3>
 <p>
    <TMPL_VAR NAME="DETAILS">
 </p>

@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 
-# written by Sputnik Antolovich (sant964@cse.unsw.edu.au) September 2012
-# based on sample code and lab11 survey script
-# by andrewt@cse
+# written by Sputnik Antolovich (sant964@cse.unsw.edu.au) October 2012
+# based on sample code and lab11 survey script by andrewt@cse
 
 use CGI qw/:all/;
 use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
@@ -58,7 +57,20 @@ sub action_see_user() {
    close $p;
    @user_file = split "\n", $details;
 
-   $template_variables{DETAILS} = $details;
+   for $elt (0..$#user_file) {
+      if ($user_file[$elt] =~ /^name:/) {
+         $template_variables{NAME} = $user_file[$elt+1];
+      } elsif ($user_file[$elt] =~ /^gender:/) {
+         $gender = $user_file[$elt+1];
+         $gender =~ s/^\W*m/M/;
+         $gender =~ s/^\W*f/F/;
+         $template_variables{GENDER} = $gender;
+      } elsif ($user_file[$elt] =~ /^degree:/) {
+         $template_variables{DEGREE} = $user_file[$elt+1];
+      }
+   }
+
+   $template_variables{DETAILS} = pre($details);
    #return p,
    #    start_form, "\n",
    #    submit('Random UNSW Mate Page'), "\n",
