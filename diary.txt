@@ -2,3 +2,5 @@
 08/10/2012 18:20-18:55 Setup new cgi script using templates instead
 08/10/2012 19:00-19:20 Almost level 0 profile page, created splash screen that welcomes user and leads to a random username
 08/10/2012 20:30-21:05 Profiles now show some user info (gender, degree)
+08/10/2012 21:05-21:35 Profiles now show a user's profile picture (desn't check if it exists first
+

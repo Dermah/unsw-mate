@@ -8,6 +8,11 @@ use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
 use HTML::Template;
 use List::Util qw/min max/;
 
+sub action_see_user();
+sub get_profile_pic($);
+sub page_header(); 
+sub page_trailer();
+
 # print start of HTML ASAP to assist debugging if there is an error in the script
 print page_header();
 warningsToBrowser(1);
@@ -32,7 +37,8 @@ my $template = HTML::Template->new(filename => "$page.template", die_on_bad_para
 # put variables into the template
 $template->param(%template_variables);
 print $template->output;
-print "</html>";
+print "</html>\n";
+print page_trailer();
 exit(0);
 
 sub action_see_user() {
@@ -69,7 +75,7 @@ sub action_see_user() {
          $template_variables{DEGREE} = $user_file[$elt+1];
       }
    }
-
+   $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
    $template_variables{DETAILS} = pre($details);
    #return p,
    #    start_form, "\n",
@@ -81,19 +87,16 @@ sub action_see_user() {
    return "user_page";
 }
 
-
-print browse_screen();
-print page_trailer();
-exit 0; 
-
-
-sub browse_screen($) {
+sub get_profile_pic ($) {
+   my ($username) = @_;
+   $url = "$users_dir/$username/profile.jpg";
+   return $url;
 }
 
 #
 # HTML placed at the top of every screen
 #
-sub page_header {
+sub page_header () {
     return header,
         start_html("-title"=>"UNSW Mate", -bgcolor=>"#FEDCBA"),
 }
@@ -103,9 +106,9 @@ sub page_header {
 # It includes all supplied parameter values as a HTML comment
 # if global variable $debug is set
 #
-sub page_trailer {
+sub page_trailer () {
     my $html = "";
-    $html .= join("", map("<!-- $_=".param($_)." -->\n", param())) if $debug;
+    $html .= join("", map("<!-- CGI PARAMS: $_=".param($_)." -->\n", param())) if $debug;
     $html .= end_html;
     return $html;
 }

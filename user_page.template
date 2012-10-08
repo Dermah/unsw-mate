@@ -2,6 +2,7 @@
 
 <h1>UNSW-Mate</h1>
 <h2><TMPL_VAR NAME="NAME"></h2>
+<img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" />
 <h3>User Info</h3>
 <p>
    <ul>
