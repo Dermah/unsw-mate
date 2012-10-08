@@ -18,6 +18,11 @@
             </ul>
          </p>
 
+         <h3>Mate List (<TMPL_VAR NAME="NUM_MATES">)</h3>
+         <ul class="matelist">
+            <TMPL_VAR NAME="MATE_LIST">
+         </ul>
+
          <h3>Raw Details</h3>
          <p>
             <TMPL_VAR NAME="DETAILS">

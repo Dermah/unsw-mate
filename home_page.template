@@ -10,11 +10,11 @@
    <p id="home-formarea">
       <form method="GET" action="<TMPL_VAR NAME="URL">">
          <input type="hidden" name="action" value="see_user" />
-         <input type="text" name="username" id="home-searchbox" /> <br />
+         <input type="text" name="username" id="home-searchbox" /><br />
       </form>
-      OR <br />
+      OR<br />
       <form method="GET" action="<TMPL_VAR NAME="URL">">
-         <input type="hidden" name="action" value="see_user">
+         <input type="hidden" name="action" value="see_user" />
          <button type="submit" id="home-randombox">See a Random User</button>
       </form>
    </p>

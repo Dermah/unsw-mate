@@ -10,6 +10,9 @@ use List::Util qw/min max/;
 
 sub action_see_user();
 sub get_profile_pic($);
+sub get_user_file($);
+sub make_mate_list($);
+sub get_mate_url($);
 sub page_header(); 
 sub page_trailer();
 
@@ -63,6 +66,8 @@ sub action_see_user() {
    close $p;
    @user_file = split "\n", $details;
 
+   @user_file = get_user_file($username);
+
    for $elt (0..$#user_file) {
       if ($user_file[$elt] =~ /^name:/) {
          $template_variables{NAME} = $user_file[$elt+1];
@@ -77,6 +82,8 @@ sub action_see_user() {
    }
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
    $template_variables{DETAILS} = pre($details);
+   $template_variables{MATE_LIST} = join " ", make_mate_list($username);
+   $template_variables{NUM_MATES} = make_mate_list($username);
    #return p,
    #    start_form, "\n",
    #    submit('Random UNSW Mate Page'), "\n",
@@ -87,9 +94,66 @@ sub action_see_user() {
    return "user_page";
 }
 
+#
+# Arg: username
+# Returns: relative URL of the specified username's profile picture
+# Current;y does not check that it exists
+#
 sub get_profile_pic ($) {
    my ($username) = @_;
    $url = "$users_dir/$username/profile.jpg";
+   return $url;
+}
+
+#
+# Arg: username
+# Returns: array of contents of username's details.txt
+# Currently does not check if username exists
+#
+sub get_user_file ($) {
+   my ($username) = @_;
+   my $details_filename = "$users_dir/$username/details.txt";
+   open my $p, "$details_filename" or die "can not open $details_filename: $!";
+   $details = join '', <$p>;
+   close $p;
+   return split "\n", $details;
+}
+
+#
+# Arg: username
+# Returns: list of mates in format <li><a href="MATE_URL"><img src="MATE_PROFILE_PIC">MATE_NAME</a></li>
+# Does not check if username is valid
+# In scalar context, returns number of mates 
+# 
+sub make_mate_list ($) {
+   my ($username) = @_;
+   my @user_file = get_user_file($username);
+   for my $elt (0..$#user_file) {
+      if ($user_file[$elt] =~ /^mates:/) {
+         while ($user_file[$elt+1] =~ /\W+\w/) {
+            my $line = $user_file[$elt+1];
+            $line =~ s/\W*([\w_-]+)\W*/$1/;
+            $user = $line;
+            $user_nounder = $line;
+            $user_nounder =~ s/_/ /g;
+            $line = "<li><a href=\"".get_mate_url($user)."\"><img class=\"matelist-pic\" src=\"".get_profile_pic($user)."\"/></a> ";
+            $line .= "<a class=\"matelist-namelink\" href=\"".get_mate_url($user)."\">".$user_nounder."</a></li>\n";
+            push @mates_names, $line;
+            $elt++;
+         }
+      }
+   }
+   return @mates_names;
+}
+
+#
+# Arg: username
+# Returns: url of the specified username
+# Doesn't check if it's valid
+#
+sub get_mate_url ($) {
+   my ($username) = @_;
+   $url = url()."?action=see_user&username=".$username;
    return $url;
 }
 
