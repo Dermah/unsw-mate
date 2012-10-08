@@ -9,6 +9,7 @@ use HTML::Template;
 use List::Util qw/min max/;
 
 sub action_see_user();
+sub action_gallery();
 sub get_profile_pic($);
 sub get_user_file($);
 sub make_mate_list($);
@@ -33,6 +34,7 @@ $users_dir = "./users";
 
 my $page = "home_page";
 my $action = param('action');
+$action =~ s/[^a-zA-Z0-9\-_]//g;
 # execute a perl function based on the CGI parameter 'action'
 $page = &{"action_$action"}() if $action && defined &{"action_$action"};
 # load HTML template from file based on $page value
@@ -46,6 +48,7 @@ exit(0);
 
 sub action_see_user() {
    my $username = param('username');
+   $username =~ s/[^a-zA-Z0-9\-_]//g;
    if (! $username) {
        # for the purposes of level 0 testing if no username is supplied
        # we select a random username
@@ -81,6 +84,7 @@ sub action_see_user() {
       }
    }
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
+   $template_variables{GALLERY_URL} = url()."?action=gallery&username=".$username;
    $template_variables{DETAILS} = pre($details);
    $template_variables{MATE_LIST} = join " ", make_mate_list($username);
    $template_variables{NUM_MATES} = make_mate_list($username);
@@ -92,6 +96,10 @@ sub action_see_user() {
    #    p, "\n";
 
    return "user_page";
+}
+
+sub action_gallery () {
+   return "gallery";
 }
 
 #
@@ -162,7 +170,7 @@ sub get_mate_url ($) {
 #
 sub page_header () {
     return header,
-        start_html(-title=>"UNSW Mate",-style=>{-src=>['/styles/style.css'],-media=>'all'});
+        start_html(-title=>"UNSW Mate",-style=>{-src=>['style.css'],-media=>'all'});
 }
 
 #

@@ -4,3 +4,4 @@
 08/10/2012 20:30-21:05 Profiles now show some user info (gender, degree)
 08/10/2012 21:05-21:35 Profiles now show a user's profile picture (desn't check if it exists first
 08/10/2012 21:35-22:10 Changed .templates to be able to use CSS later
+08/10/2012 22:15-23:45 Made stylesheets, user pages now show mate list with profile pictures
