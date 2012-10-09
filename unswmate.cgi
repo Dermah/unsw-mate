@@ -5,12 +5,14 @@
 
 use CGI qw/:all/;
 use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
+use CGI::Cookie;
 use HTML::Template;
 use List::Util qw/min max/;
 
 sub action_see_user();
 sub action_gallery();
 sub action_search();
+sub action_login();
 sub get_profile_pic($);
 sub get_user_file($);
 sub make_mate_list($);
@@ -24,6 +26,7 @@ warningsToBrowser(1);
 
 my %template_variables = (
    URL => url(),
+   LOGIN_URL => url()."?action=login",
    TITLE => "UNSW-Mate",
    CGI_PARAMS => join(",", map({"$_='".param($_)."'"} param())),
    ERROR => "Unknown error"
@@ -139,6 +142,37 @@ sub action_search () {
    $template_variables{SEARCH_TERM} = $term;
    $template_variables{SEARCH_RESULTS} = $results;
    return "search";
+}
+
+sub action_login() {
+   if (defined param('username') and defined param('password')) {
+      my $username = param('username');
+      $username =~ s/[^a-zA-Z0-9_-]//g;
+      my $user_file = "$users_dir/$username/details.txt";
+      if ($username ne param('username')) {
+         $template_variables{MESSAGE} = "Incorrect username or password";
+         return "login";
+      } elsif (!-r "$user_file") {
+         $template_variables{MESSAGE} = "Incorrect username or password";
+      } else {
+         open DETAILS, "$user_file" or die "Error opening login files, please try again";
+         while ($line !~ /^password:/) {
+            $line = <DETAILS>;
+         }
+         $password = <DETAILS>;
+         chomp $password;
+         $password =~ s/\t(.+)$/$1/;
+         if ($password eq param('password')) {
+            $template_variables{MESSAGE} = "Login successful";
+         } else {
+            $template_variables{MESSAGE} = "Incorrect username or password";
+         }
+      }
+      $password = param('password');
+   } else {
+      $template_variables{MESSAGE} = "Please enter your username and password below";
+   }
+   return "login";
 }
 
 #
