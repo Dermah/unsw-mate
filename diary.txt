@@ -5,3 +5,5 @@
 08/10/2012 21:05-21:35 Profiles now show a user's profile picture (desn't check if it exists first
 08/10/2012 21:35-22:10 Changed .templates to be able to use CSS later
 08/10/2012 22:15-23:45 Made stylesheets, user pages now show mate list with profile pictures
+08/10/2012 23:45-00:20 Added gallery support, but the gallery template just shows the user page at the moment
+09/10/2012 12:30-12:50 Made the gallery display everything correctly except for the actual gallery images showing up

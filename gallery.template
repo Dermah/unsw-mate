@@ -10,28 +10,15 @@
          <p>
             <em>Links</em>
             <ul>
-               <li><a href="<TMPL_VAR NAME="GALLERY_URL">">Gallery</a>
+               <li><a href="<TMPL_VAR NAME="PROFILE_URL">">Profile</a>
             </ul>
          </p>
       </div>
       <div id="user-rightcol">
          <h2><TMPL_VAR NAME="NAME"></h2>
-         <h3>User Info</h3>
+         <h3>Gallery</h3>
          <p>
-            <ul>
-               <li>Gender: <TMPL_VAR NAME="GENDER"></li>
-               <li>Degree: <TMPL_VAR NAME="DEGREE"></li>
-            </ul>
-         </p>
-
-         <h3>Mate List (<TMPL_VAR NAME="NUM_MATES">)</h3>
-         <ul class="matelist">
-            <TMPL_VAR NAME="MATE_LIST">
-         </ul>
-
-         <h3>Raw Details</h3>
-         <p>
-            <TMPL_VAR NAME="DETAILS">
+            <TMPL_VAR NAME="GALLERY_THUMBS">
          </p>
       </div>
    </div>

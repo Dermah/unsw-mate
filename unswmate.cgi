@@ -99,6 +99,17 @@ sub action_see_user() {
 }
 
 sub action_gallery () {
+   my $username = param('username');
+   $username =~ s/[^a-zA-Z0-9\-_]//g;
+
+   if (!$username) {
+      die "Fake 403 Forbidden Error, no username specified for gallery";
+   }
+
+   $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
+   $template_variables{PROFILE_URL} = url()."?action=see_user&username=".$username;
+   $template_variables{GALLERY_THUMBS} = "Error while accessing this mates gallery, please try again";
+    my @users = glob("$users_dir/*");
    return "gallery";
 }
 
