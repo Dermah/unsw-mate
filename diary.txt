@@ -7,3 +7,4 @@
 08/10/2012 22:15-23:45 Made stylesheets, user pages now show mate list with profile pictures
 08/10/2012 23:45-00:20 Added gallery support, but the gallery template just shows the user page at the moment
 09/10/2012 12:30-12:50 Made the gallery display everything correctly except for the actual gallery images showing up
+09/10/2012 15:05-15:50 Added search page that searches usernames only

@@ -10,6 +10,7 @@ use List::Util qw/min max/;
 
 sub action_see_user();
 sub action_gallery();
+sub action_search();
 sub get_profile_pic($);
 sub get_user_file($);
 sub make_mate_list($);
@@ -109,8 +110,35 @@ sub action_gallery () {
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
    $template_variables{PROFILE_URL} = url()."?action=see_user&username=".$username;
    $template_variables{GALLERY_THUMBS} = "Error while accessing this mates gallery, please try again";
-    my @users = glob("$users_dir/*");
+   my @gallery_files = glob("$users_dir/$username/gallery*.jpg");
+   $gallery_list = "";
+   for $image (@gallery_files) {
+      $gallery_list .= "<img src=\"".$image."\" /> <br />\n";
+   }
+   $template_variables{GALLERY_THUMBS} = $gallery_list;
    return "gallery";
+}
+
+#
+# Searches user names, not actual names
+# May not handle spaces correctly yet
+#
+sub action_search () {
+   my $term = param('term');
+   my @matches = glob("$users_dir/*$term*");
+
+   my $results = "";
+   for $user_path (@matches) {
+      $username = $user_path;
+      $username =~ s/$users_dir\/([\w_-]+)/$1/;
+      $user = $username;
+      $user =~ s/_/ /g; 
+      $results .= "<li><a href=\"".url()."?action=see_user&username=$username\"><img src=\"".$user_path."/profile.jpg\" /></a> <a href=\"".url()."?action=see_user&username=$username\">$user</a></li>\n";
+   }
+
+   $template_variables{SEARCH_TERM} = $term;
+   $template_variables{SEARCH_RESULTS} = $results;
+   return "search";
 }
 
 #

@@ -5,12 +5,12 @@
    <h1 id="home-title">UNSW-Mate</h1>
 
    <p id="home-speil">
-      Welcome to UNSW-Mate! Enter a <em>username</em> below to see if you know anyone on UNSW-Mate
+      Welcome to UNSW-Mate! Enter a search term below to search registered usernames on UNSW-Mate
    </p>
    <p id="home-formarea">
       <form method="GET" action="<TMPL_VAR NAME="URL">">
-         <input type="hidden" name="action" value="see_user" />
-         <input type="text" name="username" id="home-searchbox" /><br />
+         <input type="hidden" name="action" value="search" />
+         <input type="text" name="term" id="home-searchbox" /><br />
       </form>
       OR<br />
       <form method="GET" action="<TMPL_VAR NAME="URL">">
