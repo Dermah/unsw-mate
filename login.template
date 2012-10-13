@@ -1,0 +1,22 @@
+<body>
+
+<div id="login-page">
+
+   <h1 id="login-title">Login to UNSW-Mate</h1>
+
+   <p>
+      <TMPL_VAR NAME="MESSAGE">
+   </p>
+
+   <p id="login-formarea">
+      <form method="POST" action="<TMPL_VAR NAME="URL">">
+         <input type="hidden" name="action" value="login" />
+         Username: <input type="text" name="username" /><br />
+         Password: <input type="password" name="password" /><br />
+         <input type="submit" value="Log In" />
+      </form>
+   </p>
+
+</div>
+
+</body>

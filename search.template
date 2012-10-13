@@ -1,0 +1,14 @@
+<body>
+
+<div id="search-page">
+
+   <h1 id="search-title">UNSW-Mate</h1>
+   <h2>Search Results for "<TMPL_VAR NAME="SEARCH_TERM">"</h2>
+
+   <ul class="matelist">
+      <TMPL_VAR NAME="SEARCH_RESULTS">
+   </ul>
+
+</div>
+
+</body>
