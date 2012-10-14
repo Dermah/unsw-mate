@@ -39,7 +39,7 @@ mkdir "$cookie_cache" if (!-d "$cookie_cache");
 
 my $page = "home_page";
 my $action = param('action');
-$action =~ s/[^a-zA-Z0-9\-_]//g;
+$action =~ s/[^a-zA-Z0-9\-_]//g if $action;
 # execute a perl function based on the CGI parameter 'action'
 $page = &{"action_$action"}() if $action && defined &{"action_$action"};
 # load HTML template from file based on $page value
@@ -52,7 +52,7 @@ print page_header();
 warningsToBrowser(1);
 
 print $template->output;
-print "</html>\n";
+
 print page_trailer();
 exit(0);
 
@@ -251,11 +251,13 @@ sub get_mate_url ($) {
 # HTML placed at the top of every screen
 #
 sub page_header () {
-    return header(-COOKIE=>$cookie),
-        start_html(
-           -TITLE => "UNSW Mate",
-           -STYLE => {-src=>['style.css'],-media=>'all'},
-        );
+    return header(
+              -COOKIE=>$cookie
+           ),
+           start_html(
+              -TITLE => "UNSW Mate",
+              -STYLE => {-src=>['style.css'],-media=>'all'},
+           );
 }
 
 #
@@ -266,6 +268,7 @@ sub page_header () {
 sub page_trailer () {
     my $html = "";
     $html .= join("", map("<!-- CGI PARAMS: $_=".param($_)." -->\n", param())) if $debug;
+    $html .= "<!-- Cookie for sessionID: ".cookie('sessionID')."-->\n";
     $html .= end_html;
     return $html;
 }
