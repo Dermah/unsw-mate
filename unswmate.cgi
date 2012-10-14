@@ -8,6 +8,7 @@ use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
 use CGI::Cookie;
 use HTML::Template;
 use List::Util qw/min max/;
+use Digest::MD5 qw/md5_hex/;
 
 sub action_see_user();
 sub action_gallery();
@@ -19,6 +20,7 @@ sub make_mate_list($);
 sub get_mate_url($);
 sub page_header(); 
 sub page_trailer();
+
 
 # print start of HTML ASAP to assist debugging if there is an error in the script
 print page_header();
@@ -35,6 +37,8 @@ my %template_variables = (
 # some globals used through the script
 $debug = 1;
 $users_dir = "./users";
+$cookie_cache = "./cookies";
+mkdir "$cookie_cache" if (!-d "$cookie_cache");
 
 my $page = "home_page";
 my $action = param('action');
@@ -69,17 +73,17 @@ sub action_see_user() {
 
    my $details_filename = "$users_dir/$username/details.txt";
    open my $p, "$details_filename" or die "can not open $details_filename: $!";
-   $details = join '', <$p>;
+   my $details = join '', <$p>;
    close $p;
-   @user_file = split "\n", $details;
+   my @user_file = split "\n", $details;
 
    @user_file = get_user_file($username);
 
-   for $elt (0..$#user_file) {
+   for my $elt (0..$#user_file) {
       if ($user_file[$elt] =~ /^name:/) {
          $template_variables{NAME} = $user_file[$elt+1];
       } elsif ($user_file[$elt] =~ /^gender:/) {
-         $gender = $user_file[$elt+1];
+         my $gender = $user_file[$elt+1];
          $gender =~ s/^\W*m/M/;
          $gender =~ s/^\W*f/F/;
          $template_variables{GENDER} = $gender;
@@ -92,12 +96,6 @@ sub action_see_user() {
    $template_variables{DETAILS} = pre($details);
    $template_variables{MATE_LIST} = join " ", make_mate_list($username);
    $template_variables{NUM_MATES} = make_mate_list($username);
-   #return p,
-   #    start_form, "\n",
-   #    submit('Random UNSW Mate Page'), "\n",
-   #    pre($details),"\n",
-   #    end_form, "\n",
-   #    p, "\n";
 
    return "user_page";
 }
@@ -114,7 +112,7 @@ sub action_gallery () {
    $template_variables{PROFILE_URL} = url()."?action=see_user&username=".$username;
    $template_variables{GALLERY_THUMBS} = "Error while accessing this mates gallery, please try again";
    my @gallery_files = glob("$users_dir/$username/gallery*.jpg");
-   $gallery_list = "";
+   my $gallery_list = "";
    for $image (@gallery_files) {
       $gallery_list .= "<img src=\"".$image."\" /> <br />\n";
    }
@@ -156,6 +154,7 @@ sub action_login() {
          $template_variables{MESSAGE} = "Incorrect username or password";
       } else {
          open DETAILS, "$user_file" or die "Error opening login files, please try again";
+         $line = "dummy:";
          while ($line !~ /^password:/) {
             $line = <DETAILS>;
          }
@@ -163,7 +162,10 @@ sub action_login() {
          chomp $password;
          $password =~ s/\t(.+)$/$1/;
          if ($password eq param('password')) {
+            $hash = md5_hex($username.localtime(time).rand());
             $template_variables{MESSAGE} = "Login successful";
+            open my $H, '>', "$cookie_cache/$username" or die "Unable to create a cookie for you";
+            print $H $hash;
          } else {
             $template_variables{MESSAGE} = "Incorrect username or password";
          }
