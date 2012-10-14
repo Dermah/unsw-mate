@@ -22,9 +22,6 @@ sub page_header();
 sub page_trailer();
 
 
-# print start of HTML ASAP to assist debugging if there is an error in the script
-print page_header();
-warningsToBrowser(1);
 
 my %template_variables = (
    URL => url(),
@@ -49,6 +46,11 @@ $page = &{"action_$action"}() if $action && defined &{"action_$action"};
 my $template = HTML::Template->new(filename => "$page.template", die_on_bad_params => 0);
 # put variables into the template
 $template->param(%template_variables);
+
+# print start of HTML ASAP to assist debugging if there is an error in the script
+print page_header();
+warningsToBrowser(1);
+
 print $template->output;
 print "</html>\n";
 print page_trailer();
@@ -163,9 +165,14 @@ sub action_login() {
          $password =~ s/\t(.+)$/$1/;
          if ($password eq param('password')) {
             $hash = md5_hex($username.localtime(time).rand());
-            $template_variables{MESSAGE} = "Login successful";
             open my $H, '>', "$cookie_cache/$username" or die "Unable to create a cookie for you";
             print $H $hash;
+            $cookie = cookie (
+                       -NAME => 'sessionID',
+                       -VALUE => "$hash",
+                       -EXPIRES => '+1d',
+                    );
+            $template_variables{MESSAGE} = "Login successful. I created a cookie. It looks like $cookie";
          } else {
             $template_variables{MESSAGE} = "Incorrect username or password";
          }
@@ -244,8 +251,11 @@ sub get_mate_url ($) {
 # HTML placed at the top of every screen
 #
 sub page_header () {
-    return header,
-        start_html(-title=>"UNSW Mate",-style=>{-src=>['style.css'],-media=>'all'});
+    return header(-COOKIE=>$cookie),
+        start_html(
+           -TITLE => "UNSW Mate",
+           -STYLE => {-src=>['style.css'],-media=>'all'},
+        );
 }
 
 #
