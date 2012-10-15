@@ -1,4 +1,13 @@
 <div id="login-page">
+   <!-- This script is from http://www.bluehostforum.com/showthread.php?15836-How-to-blank-out-a-text-box-onclick  -->
+   <script type="text/javascript">
+      function removeDefault(box) { 
+         if(box.value == box.defaultValue) box.value = ""; 
+      }
+      function returnDefault(a) { 
+         if(box.value == "") box.value = box.defaultValue; 
+      }
+   </script>
 
    <h1 id="login-title">Login to UNSW-Mate</h1>
 
@@ -9,10 +18,9 @@
    <p id="login-formarea">
       <form method="POST" action="<TMPL_VAR NAME="URL">">
          <input type="hidden" name="action" value="login" />
-         Username: <input type="text" name="username" /><br />
-         Password: <input type="password" name="password" /><br />
-         <input type="submit" value="Log In" />
+         <input class="login-box" type="text" name="username" value="Username" onfocus="removeDefault(this)" onblur="returnDefault(this)"/><br />
+         <input class="login-box" type="password" name="password" value="Password" onfocus="removeDefault(this)" onblur="returnDefault(this)"/><br />
+         <input class="login-submit" type="submit" value="Log In" />
       </form>
    </p>
-
 </div>

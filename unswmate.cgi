@@ -66,7 +66,7 @@ exit(0);
 
 sub action_see_user() {
    my $username = param('username');
-   $username =~ s/[^a-zA-Z0-9\-_]//g;
+   $username =~ s/[^a-zA-Z0-9\-_]//g if $username;
    if (! $username) {
        # for the purposes of level 0 testing if no username is supplied
        # we select a random username
@@ -99,6 +99,15 @@ sub action_see_user() {
          $template_variables{GENDER} = $gender;
       } elsif ($user_file[$elt] =~ /^degree:/) {
          $template_variables{DEGREE} = $user_file[$elt+1];
+      } elsif ($user_file[$elt] =~ /^courses:/) {
+         $offset = 1;
+         while ($user_file[$elt+$offset] =~ /\t/) {
+            $template_variables{COURSE_LIST} .= "<li>";
+            $line = $user_file[$elt+$offset];
+            $line =~ s/\t//;
+            $template_variables{COURSE_LIST} .= $line."</li>";
+            $offset++;
+         }
       }
    }
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
@@ -200,6 +209,7 @@ sub action_login() {
 sub action_logout() {
    if (defined cookie('sessionID')) {
       my $hash = cookie('sessionID');
+      $hash =~ s/[^a-z0-9A-Z]//g;
       if (-r "$cookie_cache/$hash.$logged_in_user") {
          unlink("$cookie_cache/$hash.$logged_in_user");
          $cookie = cookie(
@@ -337,6 +347,7 @@ sub page_trailer () {
 sub check_login() {
    if (defined cookie('sessionID')) {
       my $hash = cookie('sessionID');
+      $hash =~ s/[^a-z0-9A-Z]//g;
       my $cookie_path = glob ("$cookie_cache/$hash.*");
       if ($cookie_path) {
          $logged_in_user = $cookie_path;
@@ -367,6 +378,6 @@ sub setup_page_top_nav() {
       $header_variables{LOGOUT} = "Logout";
    } else {
       $header_variables{LOGGED_IN_URL} = url()."?action=login";
-      $header_variables{PROFILE_PIC} = "./images/nopicture.jpg";
+      $header_variables{PROFILE_PIC} = "./nopicture.jpg";
    }
 }

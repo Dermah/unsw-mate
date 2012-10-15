@@ -19,6 +19,11 @@
             <ul>
                <li>Gender: <TMPL_VAR NAME="GENDER"></li>
                <li>Degree: <TMPL_VAR NAME="DEGREE"></li>
+               <li>Courses Completed:
+                   <ul>
+                      <TMPL_VAR NAME="COURSE_LIST">
+                   </ul>
+               </li>
             </ul>
          </p>
 
