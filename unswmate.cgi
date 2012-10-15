@@ -17,6 +17,7 @@ sub action_search();
 sub action_login();
 sub action_logout();
 sub action_delete();
+sub action_create();
 sub get_profile_pic($);
 sub get_user_file($);
 sub make_mate_list($);
@@ -30,6 +31,7 @@ sub setup_page_top_nav();
 my %template_variables = (
    URL => url(),
    LOGIN_URL => url()."?action=login",
+   CREATE_URL => url()."?action=create",
    TITLE => "UNSW-Mate",
    CGI_PARAMS => join(",", map({"$_='".param($_)."'"} param())),
    ERROR => "Unknown error"
@@ -276,6 +278,40 @@ sub action_delete() {
       $template_variables{MESSAGE} = "Are you sure you want to delete your account? This cannot be undone!";
    }
    return "delete";
+}
+
+sub action_create() {
+   sleep(2);
+   $template_variables{FORM_USERNAME} = param('username');
+   $template_variables{FORM_EMAIL} = param('email');
+   if (param('username') eq "" or param('password') eq "" or param('password2') eq "" or param('email') eq "" or param('email2') eq "") {
+      $template_variables{MESSAGE} = "One or more of the fields below were empty, please try again";
+      return "create";      
+   }
+
+   $username = param('username');
+   $username =~ s/[^a-zA-Z0-9\-_]//g;
+   if ($username ne param('username')) {
+      $template_variables{MESSAGE} = "Usernames may only have letters, numbers, hyphens and underscores in them. Please try again";
+      return "create";
+   }
+   if (param('password') ne param('password2')) {
+      $template_variables{MESSAGE} = "The passwords you entered didn't match. Please try again";
+   }
+
+   $email = param('email');
+   $email =~ s/[^a-zA-Z0-0\-_@\.]//g;
+   if ($email ne param('email')) {
+      $template_variables{MESSAGE} = "We can't send mail to this email address, please try another one";
+   } elsif ($email !~ /\w+@\w\.\w/) {
+      $template_variables{MESSAGE} = "Invalid email address, please try again";
+   }
+
+   if (param('email') ne param('email2')) {
+
+   }
+
+   return "create";
 }
 
 #

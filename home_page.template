@@ -3,7 +3,7 @@
    <h1 id="home-title">UNSW-Mate</h1>
 
    <p id="home-speil">
-      Welcome to UNSW-Mate! Click <a href="<TMPL_VAR NAME="LOGIN_URL">">here</a> to login or enter a search term below to search registered usernames on UNSW-Mate
+      Welcome to UNSW-Mate! Click <a href="<TMPL_VAR NAME="LOGIN_URL">">here</a> to login or enter a search term below to search registered usernames on UNSW-Mate. Finally, if you don't have an account, why not <a href="<TMPL_VAR NAME="CREATE_URL">">create one</a>?
    </p>
    <p id="home-formarea">
       <form method="GET" action="<TMPL_VAR NAME="URL">">

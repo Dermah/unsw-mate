@@ -47,8 +47,8 @@ h1 {
 
 #top-header-namearea {
    display: inline;
-   float: right;
    font-size: 1.2em;
+   float: right;
 }
 
 #top-header-namearea a {
@@ -60,18 +60,18 @@ h1 {
 }
 
 #top-header-pic {
-   width: 25px;
-   height: 25px;
-   display: inline;
    margin-left: 10px;
-   float: right;
+   margin-right: 10px;
+   width: 1.2em;
+   height: 1.2em;
+   vertical-align: top;
 }
 
 /* @end */
 
 /* @group home_page */
 
-#home-page {
+#home-page, #login-page, #search-page, #delete-page {
    width: 1000px;
    border-right: 1px solid #b2b2b2;
    border-left: 1px solid #b1b1b1;
@@ -89,13 +89,13 @@ h1 {
 #home-title {
 }
 
-#home-randombox, #home-searchbox {
+#home-randombox, #home-searchbox, .login-box, .login-submit {
    font-size: 1em;
    margin: 10px;
    background-color: #e9ffe9;
 }
 
-#home-searchbox {
+#home-searchbox, .login-box {
    text-align: center;
    font-weight: bold;
    color: #096900;
@@ -109,14 +109,12 @@ h1 {
    width: 1000px;
    border-right: 1px solid #b2b2b2;
    border-left: 1px solid #b1b1b1;
-   padding-right: 10px;
-   padding-left: 10px;
-   padding-bottom: 30px;
    border-bottom: 2px solid #9f9f9f;
-   margin-top: 50px;
+   margin-top: 20px;
    margin-left: auto;
    margin-right: auto;
    border-top: 1px solid #858585;
+   padding: 10px 10px 30px;
 }
 
 #user-page h2 {
@@ -154,6 +152,7 @@ ul.matelist li a {
    margin-bottom: auto;
    display: block;
 }
+
 .matelist-pic {
    width: 50px;
    height: 50px;
@@ -161,6 +160,71 @@ ul.matelist li a {
    display: block;
    float: left;
    padding-right: 10px;
+}
+
+/* @end */
+
+/* @group login-page */
+
+/* @end */
+
+/* @group search-page */
+
+#search-matelist li {
+   height: 50px;
+   margin-top: 10px;
+   display: block;
+   margin-right: auto;
+   margin-left: auto;
+   text-align: left;
+   width: 50%;
+}
+
+#search-matelist li a {
+   height: 1em;
+   margin-top: auto;
+   margin-bottom: auto;
+   display: block;
+}
+
+/* @end */
+
+/* @group toolbar */
+
+#toolbar {
+   width: 1000px;
+   margin: 5px auto;
+   padding: 10px;
+   background-color: #c6c6c6;
+   border: 1px solid #00d000;
+   display: block;
+}
+
+#toolbar-left {
+   height: 1em;
+   text-align: left;
+}
+
+#toolbar-right {
+   height: 1em;
+   text-align: right;
+   float: right;
+}
+
+/* @end */
+
+/* @group delete-page */
+
+#delete-warning {
+   background-color: #ffc3c3;
+   border: 1px solid #ff0707;
+   margin: 5px;
+   padding: 5px;
+}
+
+#delete-button {
+   font-size: 1em;
+   background-color: #ffd6d6;
 }
 
 /* @end */
