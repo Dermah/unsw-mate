@@ -41,6 +41,7 @@ my %template_variables = (
 $debug = 1;
 $users_dir = "./users";
 $cookie_cache = "./cookies";
+$verify_dir = "./toverify";
 mkdir "$cookie_cache" if (!-d "$cookie_cache");
 
 check_login;
@@ -284,7 +285,8 @@ sub action_create() {
    sleep(2);
    $template_variables{FORM_USERNAME} = param('username');
    $template_variables{FORM_EMAIL} = param('email');
-   if (param('username') eq "" or param('password') eq "" or param('password2') eq "" or param('email') eq "" or param('email2') eq "") {
+   $template_variables{FORM_EMAIL2} = param('email2');
+   if ((param('username') eq "") or (param('password') eq "") or (param('password2') eq "") or (param('email') eq "") or (param('email2') eq "")) {
       $template_variables{MESSAGE} = "One or more of the fields below were empty, please try again";
       return "create";      
    }
@@ -297,19 +299,50 @@ sub action_create() {
    }
    if (param('password') ne param('password2')) {
       $template_variables{MESSAGE} = "The passwords you entered didn't match. Please try again";
+      return "create";
    }
 
    $email = param('email');
-   $email =~ s/[^a-zA-Z0-0\-_@\.]//g;
+   $email =~ s/[^a-zA-Z0-9\-_@\.]//g;
+   $template_variables{FORM_EMAIL} = $email;
    if ($email ne param('email')) {
       $template_variables{MESSAGE} = "We can't send mail to this email address, please try another one";
-   } elsif ($email !~ /\w+@\w\.\w/) {
+      return "create";
+   } elsif ($email !~ /\w+\@\w+\.\w+/) {
       $template_variables{MESSAGE} = "Invalid email address, please try again";
+      return "create";
+   } elsif (param('email') ne param('email2')) {
+      $template_variables{MESSAGE} = "The email addresses you entered did not match. Please try again";
+      return "create";
    }
 
-   if (param('email') ne param('email2')) {
-
+   if ((-r "$users_dir/$username") or (-r "$verify_dir/$username")) {
+      $template_variables{MESSAGE} = "The username \"$username\" is already taken, please try another one";
+      return "create";
    }
+
+   mkdir $verify_dir if !-d $verify_dir;
+   my $hash = md5_hex($username.localtime(time).rand());
+   open my $H, '>', "$verify_dir/$username" or die "can not open verification file $username";
+   print $H $hash."\n";
+   print $H "password:\n";
+   print $H "\t".param('password')."\n";
+   print $H "email:\n";
+   print $H "\t".$email;
+   
+   $verify_url = url()."?action=verify&key=$hash&user=$username";
+
+   system("mutt -s 'Verification e-mail from UNSW-Mate' -- \"$email\" Hello") or die "FUCK";
+   
+   #$dat_mail = sendmail(
+   #   TO => $email,
+   #   FROM => 'none@cse.unsw.edu.au',
+   #   SUBJECT => 'Verification from UNSW-Mate',
+   #   MESSAGE => "Hello there,\nPlease use the URL below to activate your account\n $verify_url\nIf you did not create an account at UNSW-Mate please ignore this email"
+   #);
+
+   $template_variables{MESSAGE} = "A verification email has been sent to your account, your account wil be activated once you use this email $email"."yep";
+   $template_variables{VISIBILITY} = "collapse";
 
    return "create";
 }

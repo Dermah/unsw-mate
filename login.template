@@ -1,10 +1,9 @@
 <div id="login-page">
-   <!-- This script is from http://www.bluehostforum.com/showthread.php?15836-How-to-blank-out-a-text-box-onclick  -->
    <script type="text/javascript">
       function removeDefault(box) { 
          if(box.value == box.defaultValue) box.value = ""; 
       }
-      function returnDefault(a) { 
+      function returnDefault(box) { 
          if(box.value == "") box.value = box.defaultValue; 
       }
    </script>

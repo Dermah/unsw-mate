@@ -1,0 +1,7 @@
+Hi there,
+
+Please verify your new UNSW-Mate account by using the URL below:
+
+<TMPL_VAR NAME="VERIFY_URL">
+
+If you did not create an account at UNSW-Mate, please ignore this email
