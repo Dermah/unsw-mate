@@ -20,7 +20,7 @@ sub make_mate_list($);
 sub get_mate_url($);
 sub page_header(); 
 sub page_trailer();
-
+sub check_login();
 
 
 my %template_variables = (
@@ -36,6 +36,8 @@ $debug = 1;
 $users_dir = "./users";
 $cookie_cache = "./cookies";
 mkdir "$cookie_cache" if (!-d "$cookie_cache");
+
+check_login;
 
 my $page = "home_page";
 my $action = param('action');
@@ -165,14 +167,19 @@ sub action_login() {
          $password =~ s/\t(.+)$/$1/;
          if ($password eq param('password')) {
             $hash = md5_hex($username.localtime(time).rand());
-            open my $H, '>', "$cookie_cache/$username" or die "Unable to create a cookie for you";
-            print $H $hash;
+            open my $H, '>', "$cookie_cache/$hash.$username" or die "Unable to create a cookie for you";
+            print $H $hash.".".$username;
             $cookie = cookie (
                        -NAME => 'sessionID',
                        -VALUE => "$hash",
                        -EXPIRES => '+1d',
                     );
-            $template_variables{MESSAGE} = "Login successful. I created a cookie. It looks like $cookie";
+            $template_variables{MESSAGE} = "Login successful!";
+            print redirect(
+               -URL=> url(),
+               -COOKIE => $cookie
+            );
+            exit 0;
          } else {
             $template_variables{MESSAGE} = "Incorrect username or password";
          }
@@ -207,6 +214,19 @@ sub get_user_file ($) {
    $details = join '', <$p>;
    close $p;
    return split "\n", $details;
+}
+
+#
+# Gets a name from a username
+#
+sub get_name_from_user ($) {
+   my ($username) = @_;
+   my @detail_file = get_user_file($username) or die "Could not find specified user: $username";
+   for my $elt (0..$#detail_file) {
+      if ($detail_file[$elt] eq "name:") {
+         return $detail_file[$elt+1];
+      }
+   }
 }
 
 #
@@ -268,7 +288,30 @@ sub page_header () {
 sub page_trailer () {
     my $html = "";
     $html .= join("", map("<!-- CGI PARAMS: $_=".param($_)." -->\n", param())) if $debug;
-    $html .= "<!-- Cookie for sessionID: ".cookie('sessionID')."-->\n";
+    $html .= "<!-- Cookie for sessionID: ".cookie('sessionID')."-->\n" if defined cookie('sessionID');
     $html .= end_html;
     return $html;
+}
+
+#
+# Checks cookie to see if user is already logged in
+#
+sub check_login() {
+   if (defined cookie('sessionID')) {
+      my $hash = cookie('sessionID');
+      my $cookie_path = glob ("$cookie_cache/$hash.*");
+      if ($cookie_path) {
+         $logged_in_user = $cookie_path;
+         $logged_in_user =~ s/$cookie_cache\/$hash.(\w+)/$1/;
+         $logged_in_name = get_name_from_user($logged_in_user);
+         $template_variables{LOGGED_IN_USER} = $logged_in_user;
+         $template_variables{LOGGED_IN_NAME} = $logged_in_name;
+      } else {
+         $cookie = cookie(
+                    -NAME => 'sessionID',
+                    -VALUE => "",
+                    -EXPIRES => '+0s'
+                   );
+      }
+   }
 }
