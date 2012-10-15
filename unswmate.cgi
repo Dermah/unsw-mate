@@ -14,6 +14,7 @@ sub action_see_user();
 sub action_gallery();
 sub action_search();
 sub action_login();
+sub action_logout();
 sub get_profile_pic($);
 sub get_user_file($);
 sub make_mate_list($);
@@ -194,6 +195,38 @@ sub action_login() {
       $template_variables{MESSAGE} = "Please enter your username and password below";
    }
    return "login";
+}
+
+sub action_logout() {
+   if (defined cookie('sessionID')) {
+      my $hash = cookie('sessionID');
+      if (-r "$cookie_cache/$hash.$logged_in_user") {
+         unlink("$cookie_cache/$hash.$logged_in_user");
+         $cookie = cookie(
+                    -NAME => 'sessionID',
+                    -VALUE => "",
+                    -EXPIRES => '+0s'
+                   );
+         print redirect(
+                  -URL => url(),
+                  -COOKIE => $cookie
+               );
+         exit 0;
+      } else {
+         $cookie = cookie(
+                    -NAME => 'sessionID',
+                    -VALUE => "",
+                    -EXPIRES => '+0s'
+                   );
+         print redirect(
+                  -URL => url(),
+                  -COOKIE => $cookie
+               );
+         exit 0;
+      }
+   } else {
+      return "home_page";
+   }
 }
 
 #
