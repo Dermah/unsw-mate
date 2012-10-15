@@ -9,12 +9,14 @@ use CGI::Cookie;
 use HTML::Template;
 use List::Util qw/min max/;
 use Digest::MD5 qw/md5_hex/;
+use File::Path qw/remove_tree/;
 
 sub action_see_user();
 sub action_gallery();
 sub action_search();
 sub action_login();
 sub action_logout();
+sub action_delete();
 sub get_profile_pic($);
 sub get_user_file($);
 sub make_mate_list($);
@@ -49,9 +51,11 @@ $action =~ s/[^a-zA-Z0-9\-_]//g if $action;
 $page = &{"action_$action"}() if $action && defined &{"action_$action"};
 # load HTML template from file based on $page value
 my $template_header = HTML::Template->new(filename => "header.template", die_on_bad_params => 0);
+my $template_toolbar = HTML::Template->new(filename => "toolbar.template", die_on_bad_params => 0);
 my $template = HTML::Template->new(filename => "$page.template", die_on_bad_params => 0);
 # put variables into the template
 $template_header->param(%header_variables);
+$template_toolbar->param(%toolbar_variables);
 $template->param(%template_variables);
 
 # print start of HTML ASAP to assist debugging if there is an error in the script
@@ -59,6 +63,7 @@ print page_header();
 warningsToBrowser(1);
 
 print $template_header->output;
+print $template_toolbar->output if defined $toolbar_variables{VISIBILITY};
 print $template->output;
 
 print page_trailer();
@@ -82,6 +87,7 @@ sub action_see_user() {
    $template_variables{USERNAME} = $username;
 
    my $details_filename = "$users_dir/$username/details.txt";
+   return "error" if (! -r $details_filename);
    open my $p, "$details_filename" or die "can not open $details_filename: $!";
    my $details = join '', <$p>;
    close $p;
@@ -115,6 +121,11 @@ sub action_see_user() {
    $template_variables{DETAILS} = pre($details);
    $template_variables{MATE_LIST} = join " ", make_mate_list($username);
    $template_variables{NUM_MATES} = make_mate_list($username);
+
+   if ($logged_in_user eq $username) {
+      $toolbar_variables{VISIBILITY} = "visible";
+      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"\">Edit Page</a></span><span id=\"toolbar-right\"><a href=\"".url()."?action=delete\">Delete Account</a></span>";
+   }
 
    return "user_page";
 }
@@ -153,7 +164,7 @@ sub action_search () {
       $username =~ s/$users_dir\/([\w_-]+)/$1/;
       $user = $username;
       $user =~ s/_/ /g; 
-      $results .= "<li><a href=\"".url()."?action=see_user&username=$username\"><img src=\"".$user_path."/profile.jpg\" /></a> <a href=\"".url()."?action=see_user&username=$username\">$user</a></li>\n";
+      $results .= "<li><a href=\"".url()."?action=see_user&username=$username\"><img class=\"matelist-pic\" src=\"".$user_path."/profile.jpg\" /></a> <a class=\"matelist-namelink\" href=\"".url()."?action=see_user&username=$username\">$user</a></li>\n";
    }
 
    $template_variables{SEARCH_TERM} = $term;
@@ -237,6 +248,34 @@ sub action_logout() {
    } else {
       return "home_page";
    }
+}
+
+sub action_delete() {
+   if (!$logged_in_user) {
+      $template_variables{MESSAGE} = "You must be logged in to delete your account";
+      $template_variables{VISIBILITY} = "collapse";
+   } elsif (param('confirm') eq "true") {
+      my $hash = cookie('sessionID');
+      $hash =~ s/[^a-zA-Z0-9]//g;
+      if (-r "$cookie_cache/$hash.$logged_in_user") {
+         my $removal = "$users_dir/$logged_in_user";
+         remove_tree($removal) or die "Broke trying to remove user directory $removal";
+         unlink("$cookie_cache/$hash.$logged_in_user");
+         $cookie = cookie(
+                    -NAME => 'sessionID',
+                    -VALUE => "",
+                    -EXPIRES => '+0s'
+                   );
+         $template_variables{MESSAGE} = "Sorry to see you go. Your account has been deleted";
+         $template_variables{VISIBILITY} = "collapse";
+      } else {
+         $template_variables{MESSAGE} = "Error deleting your account (you don't appear to be logged in)";
+         $template_variables{VISIBILITY} = "collapse";
+      }
+   } else {
+      $template_variables{MESSAGE} = "Are you sure you want to delete your account? This cannot be undone!";
+   }
+   return "delete";
 }
 
 #

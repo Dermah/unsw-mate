@@ -15,3 +15,5 @@
 15/10/2012 17:00-18:00 CSS changes and added a header that appears at the top of every page with a log in and out button
 15/10/2012 18:00-18:15 Added logout functionality that deletes cookies in the cache and on the user computer
 15/10/2012 18:15-18:45 Various interface cleanups, user pages now show courses completed
+15/10/2012 18:45-20:15 Users can now delete their own account if logged in. Toolbar appears at top of their own page directing them to the delete page
+

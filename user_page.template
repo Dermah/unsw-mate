@@ -1,7 +1,4 @@
 <div id="user-page">
-
-   <h1>UNSW-Mate</h1>
-
    <div id="user-2col">
       <div id="user-leftcol">
          <img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" />
@@ -38,5 +35,4 @@
          </p>
       </div>
    </div>
-
 </div>

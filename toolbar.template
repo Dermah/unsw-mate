@@ -1,0 +1,3 @@
+<div id="toolbar" style="visibility:<TMPL_VAR NAME="VISIBILITY">">
+   <TMPL_VAR NAME="CONTENTS">
+</div>

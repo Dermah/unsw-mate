@@ -1,0 +1,12 @@
+<div id="delete-page">
+
+
+   <div id="delete-warning">
+      <TMPL_VAR NAME="MESSAGE">
+   </div>
+   <form method=POST action="<TMPL_VAR NAME="URL">"  style="visibility:<TMPL_VAR NAME="VISIBILITY">">
+      <input type="hidden" name="action" value="delete" />
+      <button id="delete-button" "type="submit" name="confirm" value="true">Yes, I Would Like To Delete My Account</button> 
+   </form>
+
+</div>
