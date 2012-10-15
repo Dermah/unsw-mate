@@ -1,0 +1,5 @@
+<div id="status-page">
+   <div id="status-<TMPL_VAR NAME="STATUS">-box">
+      <TMPL_VAR NAME="MESSAGE">
+   </div>
+</div>

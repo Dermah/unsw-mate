@@ -71,7 +71,7 @@ h1 {
 
 /* @group home_page */
 
-#home-page, #login-page, #search-page, #delete-page {
+#home-page, #login-page, #search-page, #delete-page, #create-page, #status-page {
    width: 1000px;
    border-right: 1px solid #b2b2b2;
    border-left: 1px solid #b1b1b1;
@@ -225,6 +225,40 @@ ul.matelist li a {
 #delete-button {
    font-size: 1em;
    background-color: #ffd6d6;
+}
+
+/* @end */
+
+/* @group create-page */
+
+#create-form {
+   text-align: right;
+   width: 34%;
+   margin: 10px auto;
+}
+
+#create-form input, button, select {
+   font-size: 1em;
+   background-color: #e9ffe9;
+   width: 200px;
+}
+
+/* @end */
+
+/* @group status-page */
+
+#status-success-box {
+   margin: 5px;
+   padding: 5px;
+   background-color: #bbffb8;
+   border: 1px solid #028f00;
+}
+
+#status-error-box {
+   margin: 5px;
+   padding: 5px;
+   background-color: #ffb8b8;
+   border: 1px solid #8f0000;
 }
 
 /* @end */

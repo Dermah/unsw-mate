@@ -8,6 +8,9 @@
    <form id="create-form" method=POST action="<TMPL_VAR NAME="URL">" style="visibility:<TMPL_VAR NAME="VISIBILITY">">
       <input type="hidden" name="action" value="create" />
       Username: <input type="text" name="username" value="<TMPL_VAR NAME="FORM_USERNAME">" /><br />
+      Your Name: <input type="text" name="name" value="<TMPL_VAR NAME="NAME">" /><br />
+      Gender: <select name="gender"><option value="male">Male</option><option value="female">Female</option></select><br />
+      Degree: <input type="text" name="degree" value="<TMPL_VAR NAME="DEGREE">" /><br />
       Password: <input type="password" name="password"><br />
       Password again: <input type="password" name="password2"><br />
       E-mail: <input type="text" name="email" value="<TMPL_VAR NAME="FORM_EMAIL">"><br />

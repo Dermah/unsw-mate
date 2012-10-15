@@ -10,6 +10,7 @@ use HTML::Template;
 use List::Util qw/min max/;
 use Digest::MD5 qw/md5_hex/;
 use File::Path qw/remove_tree/;
+use File::Copy;
 
 sub action_see_user();
 sub action_gallery();
@@ -18,6 +19,7 @@ sub action_login();
 sub action_logout();
 sub action_delete();
 sub action_create();
+sub action_verify();
 sub get_profile_pic($);
 sub get_user_file($);
 sub make_mate_list($);
@@ -158,7 +160,8 @@ sub action_gallery () {
 # May not handle spaces correctly yet
 #
 sub action_search () {
-   my $term = param('term');
+   $term = param('term');
+   $term =~ s/[^a-zA-Z0-9\-_]//g;
    my @matches = glob("$users_dir/*$term*");
 
    my $results = "";
@@ -286,7 +289,9 @@ sub action_create() {
    $template_variables{FORM_USERNAME} = param('username');
    $template_variables{FORM_EMAIL} = param('email');
    $template_variables{FORM_EMAIL2} = param('email2');
-   if ((param('username') eq "") or (param('password') eq "") or (param('password2') eq "") or (param('email') eq "") or (param('email2') eq "")) {
+   $template_variables{NAME} = param('name');
+   $template_variables{DEGREE} = param('degree');
+   if ((param('username') eq "") or (param('password') eq "") or (param('password2') eq "") or (param('email') eq "") or (param('email2') eq "") or (param('name') eq "")) {
       $template_variables{MESSAGE} = "One or more of the fields below were empty, please try again";
       return "create";      
    }
@@ -297,10 +302,22 @@ sub action_create() {
       $template_variables{MESSAGE} = "Usernames may only have letters, numbers, hyphens and underscores in them. Please try again";
       return "create";
    }
+   
+   $name = param('name');
+   $name =~ s/[^a-zA-Z\- ]//g;
+   if ((param('name') ne $name)) {
+      $template_variables{MESSAGE} = "Names can currently only have letters, spaces and hyphens in them. Please try again";
+      return "create";
+   }
    if (param('password') ne param('password2')) {
       $template_variables{MESSAGE} = "The passwords you entered didn't match. Please try again";
       return "create";
    }
+
+   $gender = param('gender');
+   $gender =~ s/[^a-z]//g;
+   $degree = param('degree');
+   $degree =~ s/[^a-zA-Z\/\-\_]//g;
 
    $email = param('email');
    $email =~ s/[^a-zA-Z0-9\-_@\.]//g;
@@ -328,11 +345,17 @@ sub action_create() {
    print $H "password:\n";
    print $H "\t".param('password')."\n";
    print $H "email:\n";
-   print $H "\t".$email;
+   print $H "\t".$email."\n";
+   print $H "name:\n";
+   print $H "\t".$name."\n";
+   print $H "gender:\n";
+   print $H "\t".$gender."\n";
+   print $H "degree:\n";
+   print $H "\t".$degree."\n";
    
    $verify_url = url()."?action=verify&key=$hash&user=$username";
 
-   system("mutt -s 'Verification e-mail from UNSW-Mate' -- \"$email\" Hello") or die "FUCK";
+   #system("mutt -s 'Verification e-mail from UNSW-Mate' -- \"$email\" Hello") or die "FUCK";
    
    #$dat_mail = sendmail(
    #   TO => $email,
@@ -341,10 +364,52 @@ sub action_create() {
    #   MESSAGE => "Hello there,\nPlease use the URL below to activate your account\n $verify_url\nIf you did not create an account at UNSW-Mate please ignore this email"
    #);
 
-   $template_variables{MESSAGE} = "A verification email has been sent to your account, your account wil be activated once you use this email $email"."yep";
+   $template_variables{MESSAGE} = "A verification email has been sent to $email, your account wil be activated once you click the link within ($verify_url)";
    $template_variables{VISIBILITY} = "collapse";
 
    return "create";
+}
+
+sub action_verify() {
+   my $user = param('user');
+   if (defined param('user')) {
+      $user =~ s/[^a-zA-Z0-9\-_]//g;
+      if (-r "$verify_dir/$user") {
+         open VERIFILE, "$verify_dir/$user" or die "couldn't open the verification file";
+         my $hash = <VERIFILE>;
+         chomp $hash;
+         if (param('key') eq $hash) {
+         } else {
+            $template_variables{STATUS} = "error";
+            $template_variables{MESSAGE} = "The link you clicked seems to be incorrect. Try copying and pasting the URL again";
+            return "status";
+         }
+      } else {
+         $template_variables{STATUS} = "error";
+         $template_variables{MESSAGE} = "No one has registered with the username \"$user\"";
+         return "status";
+    }      
+   } else {
+      $template_variables{STATUS} = "error";
+      $template_variables{MESSAGE} = "An error has occured. Try copying and pasting the URL again";
+      return "status";
+   }
+   
+   mkdir "$users_dir/$user" or die "Could not create user data at $users_dir/$user";
+   open $USERFILE, '>', "$users_dir/$user/details.txt" or die "Could not create details file at $users_dir/$user/details.txt";
+   while ($line = <VERIFILE>) {
+      print $USERFILE $line;
+   }
+   close $USERFILE;
+   close VERIFILE;
+   unlink("$verify_dir/$user");
+   
+   copy("nopicture.jpg", "$users_dir/$user/profile.jpg") or die "Could not create profile picture";
+
+   $template_variables{STATUS} = "success";
+   $template_variables{MESSAGE} = "Your email has been verified and your account has been activated. You can now login using the link above.";
+
+   return "status";
 }
 
 #

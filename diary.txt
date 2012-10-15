@@ -18,4 +18,4 @@
 15/10/2012 18:45-20:15 Users can now delete their own account if logged in. Toolbar appears at top of their own page directing them to the delete page
 15/10/2012 20:15-21:25 Partially completed account creation page
 15/10/2012 21:45-23:30 Tried and failed to get script to send email. Other students are having the same problem
-
+15/10/2012 23:30-00:45 Made verify links create new user profiles when successful
