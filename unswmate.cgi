@@ -21,6 +21,7 @@ sub get_mate_url($);
 sub page_header(); 
 sub page_trailer();
 sub check_login();
+sub setup_page_top_nav();
 
 
 my %template_variables = (
@@ -38,6 +39,7 @@ $cookie_cache = "./cookies";
 mkdir "$cookie_cache" if (!-d "$cookie_cache");
 
 check_login;
+setup_page_top_nav;
 
 my $page = "home_page";
 my $action = param('action');
@@ -45,14 +47,17 @@ $action =~ s/[^a-zA-Z0-9\-_]//g if $action;
 # execute a perl function based on the CGI parameter 'action'
 $page = &{"action_$action"}() if $action && defined &{"action_$action"};
 # load HTML template from file based on $page value
+my $template_header = HTML::Template->new(filename => "header.template", die_on_bad_params => 0);
 my $template = HTML::Template->new(filename => "$page.template", die_on_bad_params => 0);
 # put variables into the template
+$template_header->param(%header_variables);
 $template->param(%template_variables);
 
 # print start of HTML ASAP to assist debugging if there is an error in the script
 print page_header();
 warningsToBrowser(1);
 
+print $template_header->output;
 print $template->output;
 
 print page_trailer();
@@ -313,5 +318,22 @@ sub check_login() {
                     -EXPIRES => '+0s'
                    );
       }
+   }
+}
+
+sub setup_page_top_nav() {
+   $header_variables{SCRIPT_URL} = url();
+   
+   $header_variables{LOGGED_IN_NAME} = "Login";
+   $header_variables{LOGGED_IN_NAME} = $logged_in_name if defined $logged_in_name;
+   
+   if (defined $logged_in_user) {
+      $header_variables{LOGGED_IN_URL} = get_mate_url($logged_in_user);
+      $header_variables{PROFILE_PIC} = get_profile_pic($logged_in_user);
+      $header_variables{LOGOUT_URL} = url()."?action=logout";
+      $header_variables{LOGOUT} = "Logout";
+   } else {
+      $header_variables{LOGGED_IN_URL} = url()."?action=login";
+      $header_variables{PROFILE_PIC} = "./images/nopicture.jpg";
    }
 }

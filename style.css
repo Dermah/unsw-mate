@@ -1,0 +1,166 @@
+/* @override http://cgi.cse.unsw.edu.au/~sant964/ass2/style.css */
+
+body {
+   font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+   margin: 0;
+}
+
+a {
+   text-decoration: none;
+   color: #0a9d00;
+   font-weight: bold;
+}
+
+a:hover {
+   color: #055f00;
+}
+
+h1 {
+   color: #157e00;
+}
+
+/* @group top-header */
+
+#top-header {
+   width: 1000px;
+   margin-right: auto;
+   margin-left: auto;
+   border: 1px solid #c3c3c3;
+   background-color: #009514;
+   border-top-style: none;
+   padding: 5px 10px;
+   display: block;
+}
+
+#top-header-logo {
+   display: inline;
+}
+
+#top-header-logo a {
+   color: #ffffff;
+   font-size: 1.2em;
+}
+
+#top-header-logo a:hover {
+   color: #9fffa0;
+}
+
+#top-header-namearea {
+   display: inline;
+   float: right;
+   font-size: 1.2em;
+}
+
+#top-header-namearea a {
+   color: #ffffff;
+}
+
+#top-header-namearea a:hover {
+   color: #d4ffc6;
+}
+
+#top-header-pic {
+   width: 25px;
+   height: 25px;
+   display: inline;
+   margin-left: 10px;
+   float: right;
+}
+
+/* @end */
+
+/* @group home_page */
+
+#home-page {
+   width: 1000px;
+   border-right: 1px solid #b2b2b2;
+   border-left: 1px solid #b1b1b1;
+   padding-right: 10px;
+   padding-left: 10px;
+   padding-bottom: 30px;
+   border-bottom: 2px solid #9f9f9f;
+   margin-top: 20px;
+   margin-left: auto;
+   margin-right: auto;
+   text-align: center;
+   border-top: 1px solid #858585;
+}
+
+#home-title {
+}
+
+#home-randombox, #home-searchbox {
+   font-size: 1em;
+   margin: 10px;
+   background-color: #e9ffe9;
+}
+
+#home-searchbox {
+   text-align: center;
+   font-weight: bold;
+   color: #096900;
+}
+
+/* @end */
+
+/* @group user_page */
+
+#user-page {
+   width: 1000px;
+   border-right: 1px solid #b2b2b2;
+   border-left: 1px solid #b1b1b1;
+   padding-right: 10px;
+   padding-left: 10px;
+   padding-bottom: 30px;
+   border-bottom: 2px solid #9f9f9f;
+   margin-top: 50px;
+   margin-left: auto;
+   margin-right: auto;
+   border-top: 1px solid #858585;
+}
+
+#user-page h2 {
+   margin-top: 0;
+}
+
+#user-2col {
+   width: 100%;
+   display: inline-block;
+}
+
+#user-leftcol {
+   float: left;
+   width: 250px;
+}
+
+#user-rightcol {
+   float: right;
+   width: 700px;
+}
+
+/* @end */
+
+/* @group matelist */
+
+ul.matelist li {
+   height: 50px;
+   margin-top: 10px;
+   display: block;
+}
+
+ul.matelist li a {
+   height: 1em;
+   margin-top: auto;
+   margin-bottom: auto;
+   display: block;
+}
+.matelist-pic {
+   width: 50px;
+   height: 50px;
+   margin: auto;
+   display: block;
+   float: left;
+   padding-right: 10px;
+}
+
+/* @end */

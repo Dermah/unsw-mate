@@ -1,0 +1,11 @@
+<div id="top-header">
+   <div id="top-header-logo">
+      <a href="<TMPL_VAR NAME="SCRIPT_URL">">UNSW-Mate</a>
+   </div>
+
+   <div id="top-header-namearea">
+      <a href="<TMPL_VAR NAME="LOGGED_IN_URL">"><TMPL_VAR NAME="LOGGED_IN_NAME"><img id="top-header-pic" src="<TMPL_VAR NAME="PROFILE_PIC">" /></a> <a href="<TMPL_VAR NAME="LOGOUT_URL">"><TMPL_VAR NAME="LOGOUT"></a>
+   </div>
+   
+
+</div>
