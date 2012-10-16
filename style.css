@@ -117,7 +117,9 @@ h1 {
    padding: 10px 10px 30px;
 }
 
-#user-page h2 {
+#user-page, #edit-page
+
+ h2 {
    margin-top: 0;
 }
 
@@ -134,6 +136,8 @@ h1 {
 #user-rightcol, #edit-rightcol {
    float: right;
    width: 700px;
+   border-left: 1px dotted #cbcbcb;
+   padding-left: 20px;
 }
 
 .edit-del-button {
@@ -148,6 +152,8 @@ h1 {
 #edit-page textarea {
    background-color: #e9ffe9;
    width: 99%;
+   font-size: 1em;
+   height: 8em;
 }
 
 /* @end */
