@@ -20,6 +20,7 @@ sub action_logout();
 sub action_delete();
 sub action_create();
 sub action_verify();
+sub action_edit_user();
 sub get_profile_pic($);
 sub get_user_file($);
 sub make_mate_list($);
@@ -129,7 +130,7 @@ sub action_see_user() {
 
    if ($logged_in_user eq $username) {
       $toolbar_variables{VISIBILITY} = "visible";
-      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"\">Edit Page</a></span><span id=\"toolbar-right\"><a href=\"".url()."?action=delete\">Delete Account</a></span>";
+      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".url()."?action=edit_user\">Edit Page</a></span><span id=\"toolbar-right\"><a href=\"".url()."?action=delete\">Delete Account</a></span>";
    }
 
    return "user_page";
@@ -408,6 +409,15 @@ sub action_verify() {
    $template_variables{MESSAGE} = "Your email has been verified and your account has been activated. You can now login using the link above.";
 
    return "status";
+}
+
+sub action_edit_user() {
+   if (!$logged_in_user) {
+      $template_variables{MESSAGE} = "You have to be logged in to edit your profile";
+      $template_variables{STATUS} = "error";
+      return "status";
+   }
+   return "edit_user";
 }
 
 #

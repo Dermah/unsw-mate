@@ -1,0 +1,38 @@
+<div id="user-page">
+   <div id="user-2col">
+      <div id="user-leftcol">
+         <img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" />
+         <p>
+            <em>Links</em>
+            <ul>
+               <li><a href="<TMPL_VAR NAME="GALLERY_URL">">Gallery</a>
+            </ul>
+         </p>
+      </div>
+      <div id="user-rightcol">
+         <h2><TMPL_VAR NAME="NAME"></h2>
+         <h3>User Info</h3>
+         <p>
+            <ul>
+               <li>Gender: <TMPL_VAR NAME="GENDER"></li>
+               <li>Degree: <TMPL_VAR NAME="DEGREE"></li>
+               <li>Courses Completed:
+                   <ul>
+                      <TMPL_VAR NAME="COURSE_LIST">
+                   </ul>
+               </li>
+            </ul>
+         </p>
+
+         <h3>Mate List (<TMPL_VAR NAME="NUM_MATES">)</h3>
+         <ul class="matelist">
+            <TMPL_VAR NAME="MATE_LIST">
+         </ul>
+
+         <h3>Raw Details</h3>
+         <p>
+            <TMPL_VAR NAME="DETAILS">
+         </p>
+      </div>
+   </div>
+</div>
