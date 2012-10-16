@@ -23,6 +23,7 @@ sub action_verify();
 sub action_edit_user();
 sub get_profile_pic($);
 sub get_user_file($);
+sub get_user_file_hash($);
 sub make_mate_list($);
 sub get_mate_url($);
 sub page_header(); 
@@ -430,7 +431,7 @@ sub action_edit_user() {
       return "status";
    }
    
-   if (param('edit') eq "Submit") {
+   if ((param('edit') eq "Save") or (defined param('del_course'))) {
       $template_variables{MESSAGE} = "You are attempting to edit your profile! Woo!";
       $template_variables{STATUS} = "success";
       
@@ -446,37 +447,78 @@ sub action_edit_user() {
          close $F;
       }
 
+      %details = get_user_file_hash($logged_in_user);
+
+      $details{gender} = param('gender') if param('gender') =~ /^.*\w+.*$/;
+      $details{degree} = param('degree') if param('degree') =~ /^.*\w+.*$/;
+      $details{courses} .= "\n".param('new_course') if param('new_course') =~ /^.*\w+.*$/;
+      if (param('del_course')) {
+          my @courses = split "\n", $details{courses};
+          $details{courses} = "";
+          $counter = 1;
+          for my $course (@courses) {
+             $details{courses} .= $course."\n" if $counter != param('del_course');
+             $counter++;
+          }
+      }
+      chomp $details{courses};
+
+      $details{$_} =~ s/\</&lt;/g for keys %details;
+      $details{$_} =~ s/\>/&gt;/g for keys %details;
+
+      $template_variables{MESSAGE} .= "Here is something <pre>";
+
+      $template_variables{MESSAGE} .= "</pre>";
+
+      if (-r "$users_dir/$logged_in_user/details.txt") {
+         open $USERFILE, '>', "$users_dir/$logged_in_user/details.txt" or die "Could not create details file at $users_dir/$user/details.txt";
+         #format a hash for printing to details.txt
+         for my $key (keys %details) {
+            @lines = split "\n", $details{$key};
+            $line = "\t";
+            $line .= join "\n\t", @lines;
+            print $USERFILE "$key:\n$line\n";
+         }
+         close $USERFILE;         
+      } else {
+         $template_variables{MESSAGE} = "Bit of a problem, sorry chap";
+         $template_variables{STATUS} = "error";
+         return "status";
+      }
+
+      $template_variables{MESSAGE} = "Your profile was successfully changed!";
+      $template_variables{STATUS} = "success";
    }
    
-   @user_file = get_user_file($logged_in_user);
+   %details = get_user_file_hash($logged_in_user);
 
    $delete_html1 = "<button class=\"edit-del-button\" type=\"submit\" name=\"del_course\" value=\"";
    $delete_html2 = "\"><img src=\"cross.png\" \/></button>";
+
    # this and the identical code in see_user should be consolidated
-   # also it should probably utilise a hash
-   for my $elt (0..$#user_file) {
-      if ($user_file[$elt] =~ /^name:/) {
-         $template_variables{NAME} = $user_file[$elt+1];
-      } elsif ($user_file[$elt] =~ /^gender:/) {
-         my $gender = $user_file[$elt+1];
-         $gender =~ s/^\W*m/M/;
-         $gender =~ s/^\W*f/F/;
-         $template_variables{MALE_SEL}   = "selected=\"selected\"" if $gender =~ /^Male$/;
-         $template_variables{FEMALE_SEL} = "selected=\"selected\"" if $gender =~ /^Female$/;
-      } elsif ($user_file[$elt] =~ /^degree:/) {
-         $template_variables{DEGREE} = $user_file[$elt+1];
-         $template_variables{DEGREE} =~ s/\t//;
-      } elsif ($user_file[$elt] =~ /^courses:/) {
-         $offset = 1;
-         while ($user_file[$elt+$offset] =~ /\t/) {
-            $template_variables{COURSE_LIST} .= "<li>".$delete_html1."$offset".$delete_html2." ";
-            $line = $user_file[$elt+$offset];
-            $line =~ s/\t//;
-            $template_variables{COURSE_LIST} .= $line."</li>";
-            $offset++;
-         }
-      }
+   $template_variables{NAME} = $details{name};
+   chomp $template_variables{NAME};
+   my $gender = $details{gender};
+   chomp $gender;
+   $gender =~ s/^\W*m/M/;
+   $gender =~ s/^\W*f/F/;
+   $template_variables{GENDER} = $gender;
+   $template_variables{MALE_SEL}   = "selected=\"selected\"" if $gender =~ /^Male$/;
+   $template_variables{FEMALE_SEL} = "selected=\"selected\"" if $gender =~ /^Female$/;
+   $template_variables{DEGREE} = $details{degree};
+   chomp $template_variables{DEGREE};
+   $template_variables{COURSE_LIST} = $details{courses};
+
+   $del_num = 1;
+   my @course_array = split "\n", $template_variables{COURSE_LIST};
+   my $course = shift @course_array;
+   my $course_list = "<li>".$delete_html1.$del_num.$delete_html2." $course";
+   for $course (@course_array) {
+      $del_num++;
+      $course_list .= "</li>\n<li>".$delete_html1.$del_num.$delete_html2." $course";
    }
+   $course_list .= "</li>";
+   $template_variables{COURSE_LIST} = $course_list;
    
    my $about_me_file = "$users_dir/$logged_in_user/about_me.txt";
    
@@ -489,14 +531,18 @@ sub action_edit_user() {
          $about_me .= $line;
       }
       $template_variables{ABOUT_ME} = $about_me;
-   } else {
    }
 
+   $template_variables{PROFILE_URL} = url()."?action=see_user&username=".$logged_in_user;
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($logged_in_user);
    $template_variables{GALLERY_URL} = url()."?action=gallery&username=".$logged_in_user;
    $template_variables{DETAILS} = pre($details);
    $template_variables{MATE_LIST} = join " ", make_mate_list($logged_in_user);
    $template_variables{NUM_MATES} = make_mate_list($logged_in_user);
+
+   #page and account editing toolbar
+   $toolbar_variables{VISIBILITY} = "visible";
+   $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".url()."?action=see_user&username=$logged_in_user\">Cancel</a></span><span id=\"toolbar-right\"><a href=\"".url()."?action=delete\"></a></span>";
 
 
    return "edit_user";
@@ -525,6 +571,31 @@ sub get_user_file ($) {
    $details = join '', <$p>;
    close $p;
    return split "\n", $details;
+}
+
+#
+# Arg: username
+# Returns: hash of username's details.txt
+#
+sub get_user_file_hash ($) {
+   my ($username) = @_;
+   my $details_file = "$users_dir/$username/details.txt";
+   my %details;
+   if (-r $details_file) {
+      open DETAILS, $details_file or die "Could not open user details";
+      while ($line = <DETAILS>) {
+         if ($line =~ /^(\w+):/) {
+            $key = $1;
+            $details{$key} = "";
+         } elsif ($line =~ /^\t(.+)$/) {
+            $details{$key} .= $1;
+            $details{$key} .= "\n" if ($key eq "courses" or $key eq "mates");
+         }
+      }
+   }
+   chomp $details{courses};
+   chomp $details{mates};
+   return %details;
 }
 
 #
