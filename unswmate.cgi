@@ -91,13 +91,8 @@ sub action_see_user() {
        $username =~ s/.*\///;
    }
    $template_variables{USERNAME} = $username;
-
-   my $details_filename = "$users_dir/$username/details.txt";
-   return "error" if (! -r $details_filename);
-   open my $p, "$details_filename" or die "can not open $details_filename: $!";
-   my $details = join '', <$p>;
-   close $p;
-   my @user_file = split "\n", $details;
+   $template_variables{MESSAGE} = "Could not find user $username";
+   $template_variables{STATUS} = "error";
 
    @user_file = get_user_file($username);
 
@@ -128,9 +123,25 @@ sub action_see_user() {
    $template_variables{MATE_LIST} = join " ", make_mate_list($username);
    $template_variables{NUM_MATES} = make_mate_list($username);
 
+   #page and account editing toolbar
    if ($logged_in_user eq $username) {
       $toolbar_variables{VISIBILITY} = "visible";
       $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".url()."?action=edit_user\">Edit Page</a></span><span id=\"toolbar-right\"><a href=\"".url()."?action=delete\">Delete Account</a></span>";
+   }
+   
+   my $about_me_file = "$users_dir/$username/about_me.txt";
+   
+   if (-r $about_me_file) {
+      open ABOUT, $about_me_file or die "Could not open about me file $about_me_file";
+      my $about_me = "";
+      while (my $line = <ABOUT>) {
+         $line =~ s/\</\&lt\;/g;
+         $line =~ s/\>/\&gt\;/g;
+         $about_me .= $line."<br />";
+      }
+      $template_variables{ABOUT_ME} = $about_me;
+   } else {
+      $template_variables{ABOUT_ME} = "This user hasn't provided any information about themselves!";
    }
 
    return "user_page";
@@ -180,6 +191,7 @@ sub action_search () {
 }
 
 sub action_login() {
+   sleep(2); #to prevent bruteforce attack
    if (defined param('username') and defined param('password')) {
       my $username = param('username');
       $username =~ s/[^a-zA-Z0-9_-]//g;
@@ -286,7 +298,7 @@ sub action_delete() {
 }
 
 sub action_create() {
-   sleep(2);
+   sleep(2); # to prevent bruteforce attack
    $template_variables{FORM_USERNAME} = param('username');
    $template_variables{FORM_EMAIL} = param('email');
    $template_variables{FORM_EMAIL2} = param('email2');
@@ -417,6 +429,76 @@ sub action_edit_user() {
       $template_variables{STATUS} = "error";
       return "status";
    }
+   
+   if (param('edit') eq "Submit") {
+      $template_variables{MESSAGE} = "You are attempting to edit your profile! Woo!";
+      $template_variables{STATUS} = "success";
+      
+      $about_me = param('about_me');
+      undef $about_me if $about_me =~ /^\W*$/;
+      if (!defined $about_me) {
+         unlink "$users_dir/$logged_in_user/about_me.txt"
+      } else {
+         open $F, '>', "$users_dir/$logged_in_user/about_me.txt" or die "Could not write about me";
+         $about_me =~ s/\</\&lt\;/g;
+         $about_me =~ s/\>/\&gt\;/g;
+         print $F $about_me;
+         close $F;
+      }
+
+   }
+   
+   @user_file = get_user_file($logged_in_user);
+
+   $delete_html1 = "<button class=\"edit-del-button\" type=\"submit\" name=\"del_course\" value=\"";
+   $delete_html2 = "\"><img src=\"cross.png\" \/></button>";
+   # this and the identical code in see_user should be consolidated
+   # also it should probably utilise a hash
+   for my $elt (0..$#user_file) {
+      if ($user_file[$elt] =~ /^name:/) {
+         $template_variables{NAME} = $user_file[$elt+1];
+      } elsif ($user_file[$elt] =~ /^gender:/) {
+         my $gender = $user_file[$elt+1];
+         $gender =~ s/^\W*m/M/;
+         $gender =~ s/^\W*f/F/;
+         $template_variables{MALE_SEL}   = "selected=\"selected\"" if $gender =~ /^Male$/;
+         $template_variables{FEMALE_SEL} = "selected=\"selected\"" if $gender =~ /^Female$/;
+      } elsif ($user_file[$elt] =~ /^degree:/) {
+         $template_variables{DEGREE} = $user_file[$elt+1];
+         $template_variables{DEGREE} =~ s/\t//;
+      } elsif ($user_file[$elt] =~ /^courses:/) {
+         $offset = 1;
+         while ($user_file[$elt+$offset] =~ /\t/) {
+            $template_variables{COURSE_LIST} .= "<li>".$delete_html1."$offset".$delete_html2." ";
+            $line = $user_file[$elt+$offset];
+            $line =~ s/\t//;
+            $template_variables{COURSE_LIST} .= $line."</li>";
+            $offset++;
+         }
+      }
+   }
+   
+   my $about_me_file = "$users_dir/$logged_in_user/about_me.txt";
+   
+   if (-r $about_me_file) {
+      open ABOUT, $about_me_file or die "Could not open about me file $about_me_file";
+      my $about_me = "";
+      while (my $line = <ABOUT>) {
+         $line =~ s/\</\&lt\;/g;
+         $line =~ s/\>/\&gt\;/g;
+         $about_me .= $line;
+      }
+      $template_variables{ABOUT_ME} = $about_me;
+   } else {
+   }
+
+   $template_variables{PROFILE_PIC_URL} = get_profile_pic($logged_in_user);
+   $template_variables{GALLERY_URL} = url()."?action=gallery&username=".$logged_in_user;
+   $template_variables{DETAILS} = pre($details);
+   $template_variables{MATE_LIST} = join " ", make_mate_list($logged_in_user);
+   $template_variables{NUM_MATES} = make_mate_list($logged_in_user);
+
+
    return "edit_user";
 }
 

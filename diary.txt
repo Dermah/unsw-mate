@@ -20,3 +20,7 @@
 15/10/2012 21:45-23:30 Tried and failed to get script to send email. Other students are having the same problem
 15/10/2012 23:30-00:45 Made verify links create new user profiles when successful
 16/10/2012 13:10-13:25 Emails are now sent for verification. Better handling of degree input at creatte page. 
+16/10/2012 13:45-14:00 Added edit page that detects if user is logged in, doesnt do much else
+16/10/2012 00:45-01:00 Limited About Me support added to user pages
+16/10/2012 01:00-02:20 Users can now edit their about me section, is they enter no information then their about me file is deleted
+
