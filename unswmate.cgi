@@ -317,10 +317,10 @@ sub action_create() {
    $gender = param('gender');
    $gender =~ s/[^a-z]//g;
    $degree = param('degree');
-   $degree =~ s/[^a-zA-Z\/\-\_]//g;
+   $degree =~ s/[^a-zA-Z\/\-\_ ]//g;
 
    $email = param('email');
-   $email =~ s/[^a-zA-Z0-9\-_@\.]//g;
+   $email =~ s/[^a-zA-Z0-9\-_@\.\!\#\$\%\&\'\*\+\-\/\=\?\^_\`\{\|\}\~]//g;
    $template_variables{FORM_EMAIL} = $email;
    if ($email ne param('email')) {
       $template_variables{MESSAGE} = "We can't send mail to this email address, please try another one";
@@ -355,16 +355,14 @@ sub action_create() {
    
    $verify_url = url()."?action=verify&key=$hash&user=$username";
 
-   #system("mutt -s 'Verification e-mail from UNSW-Mate' -- \"$email\" Hello") or die "FUCK";
-   
-   #$dat_mail = sendmail(
-   #   TO => $email,
-   #   FROM => 'none@cse.unsw.edu.au',
-   #   SUBJECT => 'Verification from UNSW-Mate',
-   #   MESSAGE => "Hello there,\nPlease use the URL below to activate your account\n $verify_url\nIf you did not create an account at UNSW-Mate please ignore this email"
-   #);
+   open F, '|-', 'mail', '-s', 'Verification from UNSW-Mate', $email or die "Cant send email to $address";
+   print F "Hi there,\n\n";
+   print F "Please use this URL to activate your UNSW-Mate account:\n";
+   print F "$verify_url\n\n";
+   print F "If you didn't sign up to UNSW-Mate then please ignore this email";
+   close F;
 
-   $template_variables{MESSAGE} = "A verification email has been sent to $email, your account wil be activated once you click the link within ($verify_url)";
+   $template_variables{MESSAGE} = "A verification email has been sent to $email, your account wil be activated once you click the link within";
    $template_variables{VISIBILITY} = "collapse";
 
    return "create";
