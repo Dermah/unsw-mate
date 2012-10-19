@@ -26,3 +26,4 @@
 16/10/2012 02:20-03:25 Edit page now tries to read the user details into a hash which will be implemented in other pages later
 16/10/2012 03:25-04:40 Edit page is fully functional now
 19/10/2012 16:00-19:20 Lots of style changes and code fixes, code cleaned up to use hashes and bug fixes
+19/10/2012 19:30-20:15 More fixes, hash usage and cleanups

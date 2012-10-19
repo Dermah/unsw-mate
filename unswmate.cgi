@@ -97,6 +97,7 @@ sub action_see_user() {
        $username = $users[rand @users];
        $username =~ s/.*\///;
    }
+
    $username =~ s/[^a-zA-Z0-9\-_]//g;
 
    if (does_user_exist($username) ne "yes") {
@@ -106,6 +107,7 @@ sub action_see_user() {
    }
 
    $template_variables{USERNAME} = $username;
+   @user_details = get_user_file($username);
    %details = get_user_file_hash($username);
    
    $template_variables{NAME} = $details{name};
@@ -126,9 +128,9 @@ sub action_see_user() {
 
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
    $template_variables{GALLERY_URL} = $gallery_url.$username;
-   $template_variables{DETAILS} = pre($details);
+   $template_variables{DETAILS} = pre($file_details);
    $template_variables{MATE_LIST} = join " ", make_mate_list($username);
-   $template_variables{NUM_MATES} = make_mate_list($username);
+   $template_variables{NUM_MATES} = make_mate_list($username)/2;
 
    #page and account editing toolbar
    if ($logged_in_user eq $username) {
@@ -474,10 +476,6 @@ sub action_edit_user() {
       $details{$_} =~ s/\</&lt;/g for keys %details;
       $details{$_} =~ s/\>/&gt;/g for keys %details;
 
-      $template_variables{MESSAGE} .= "Here is something <pre>";
-
-      $template_variables{MESSAGE} .= "</pre>";
-
       if (-r "$users_dir/$logged_in_user/details.txt") {
          open $USERFILE, '>', "$users_dir/$logged_in_user/details.txt" or die "Could not create details file at $users_dir/$user/details.txt";
          #format a hash for printing to details.txt
@@ -495,7 +493,6 @@ sub action_edit_user() {
       }
 
       my $pic_filename = param('filename');
-      #my $pic_data = join("", <$pic_filename>);
       open PIC, '>', "$users_dir/$logged_in_user/profile-temp.jpg";
       print PIC $_ while <$pic_filename>;
       close PIC; 
@@ -552,17 +549,16 @@ sub action_edit_user() {
       $template_variables{ABOUT_ME} = $about_me;
    }
 
-   $template_variables{PROFILE_URL} = url()."?action=see_user&username=".$logged_in_user;
+   $template_variables{PROFILE_URL} = $profile_url."&username=".$logged_in_user;
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($logged_in_user);
-   $template_variables{GALLERY_URL} = url()."?action=gallery&username=".$logged_in_user;
-   $template_variables{DETAILS} = pre($details);
+   $template_variables{GALLERY_URL} = $gallery_url.$logged_in_user;
+   $template_variables{DETAILS} = pre($file_details);
    $template_variables{MATE_LIST} = join " ", make_mate_list($logged_in_user);
    $template_variables{NUM_MATES} = make_mate_list($logged_in_user);
 
    #page and account editing toolbar
    $toolbar_variables{VISIBILITY} = "visible";
    $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".url()."?action=see_user&username=$logged_in_user\">Cancel</a></span><span id=\"toolbar-right\"><a href=\"".url()."?action=delete\"></a></span>";
-
 
    return "edit_user";
 }
@@ -587,9 +583,9 @@ sub get_user_file ($) {
    my ($username) = @_;
    my $details_filename = "$users_dir/$username/details.txt";
    open my $p, "$details_filename" or die "can not open $details_filename: $!";
-   $details = join '', <$p>;
+   $file_details = join '', <$p>;
    close $p;
-   return split "\n", $details;
+   return split "\n", $file_details;
 }
 
 sub does_user_exist($) {
@@ -629,12 +625,8 @@ sub get_user_file_hash ($) {
 #
 sub get_name_from_user ($) {
    my ($username) = @_;
-   my @detail_file = get_user_file($username) or die "Could not find specified user: $username";
-   for my $elt (0..$#detail_file) {
-      if ($detail_file[$elt] eq "name:") {
-         return $detail_file[$elt+1];
-      }
-   }
+   my %details  = get_user_file_hash($username);
+   return $details{name};
 }
 
 #
@@ -645,21 +637,13 @@ sub get_name_from_user ($) {
 # 
 sub make_mate_list ($) {
    my ($username) = @_;
-   my @user_file = get_user_file($username);
-   for my $elt (0..$#user_file) {
-      if ($user_file[$elt] =~ /^mates:/) {
-         while ($user_file[$elt+1] =~ /\W+\w/) {
-            my $line = $user_file[$elt+1];
-            $line =~ s/\W*([\w_-]+)\W*/$1/;
-            $user = $line;
-            $user_nounder = $line;
-            $user_nounder =~ s/_/ /g;
-            $line = "<li><a href=\"".get_mate_url($user)."\"><img class=\"matelist-pic\" src=\"".get_profile_pic($user)."\"/></a> ";
-            $line .= "<a class=\"matelist-namelink\" href=\"".get_mate_url($user)."\">".$user_nounder."</a></li>\n";
-            push @mates_names, $line;
-            $elt++;
-         }
-      }
+   my %details = get_user_file_hash($username);
+   foreach $user (split "\n", $details{mates}) {
+      $user_nounder = $user;
+      $user_nounder =~ s/_/ /g;
+      $line ="<li><a href=\"".get_mate_url($user)."\"><img class=\"matelist-pic\" src=\"".get_profile_pic($user)."\"/></a> ";
+      $line .= "<a class=\"matelist-namelink\" href=\"".get_mate_url($user)."\">".$user_nounder."</a></li>\n";
+      push @mates_names, $line;
    }
    return @mates_names;
 }
@@ -694,11 +678,13 @@ sub page_header () {
 # if global variable $debug is set
 #
 sub page_trailer () {
-    my $html = "";
-    $html .= join("", map("<!-- CGI PARAMS: $_=".param($_)." -->\n", param())) if $debug;
-    $html .= "<!-- Cookie for sessionID: ".cookie('sessionID')."-->\n" if defined cookie('sessionID');
-    $html .= end_html;
-    return $html;
+   my $html = "";
+   if ($debug) {
+      $html .= join("", map("<!-- CGI PARAMS: $_=".param($_)." -->\n", param()));
+      $html .= "<!-- Cookie for sessionID: ".cookie('sessionID')."-->\n" if defined cookie('sessionID');
+   }
+   $html .= end_html;
+   return $html;
 }
 
 #

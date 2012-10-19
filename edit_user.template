@@ -7,6 +7,7 @@
          <div id="edit-leftcol">
             <img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" /> <br />
             <h3>Upload Profile Picture</h3>
+            For best results, use a square picture <br />
             <input id="edit-profileupload" type="file" name="filename" />
             <p>
                <em>Links</em>
@@ -36,10 +37,6 @@
                      </ul>
                   </li>
                </ul>
-            </p>
-            <h3>Raw Details</h3>
-            <p>
-               <TMPL_VAR NAME="DETAILS">
             </p>
          </div>
       </div>
