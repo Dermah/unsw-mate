@@ -73,6 +73,13 @@ img {
    vertical-align: top;
 }
 
+#top-header-requests {
+   margin-right: 10px;
+   background-color: #734281;
+   padding-right: 6px;
+   padding-left: 6px;
+}
+
 /* @end */
 
 /* @group home_page */
@@ -108,7 +115,7 @@ img {
 
 /* @end */
 
-/* @group user_page edit-page */
+/* @group user_page #galley-page edit-page */
 
 #user-page, #gallery-page, #edit-page {
    width: 1000px;
@@ -178,12 +185,18 @@ img {
 
 /* @end */
 
-/* @group user_page edit-page */
+/* @group gallery-page */
 
-#gallery-page img {
+.gallery-picture {
    margin-right: auto;
    margin-left: auto;
    display: block;
+}
+
+.gallery-edit-delete {
+   display: inline;
+   float: left;
+   margin-right: 5px;
 }
 
 /* @end */
@@ -303,6 +316,7 @@ ul.matelist li a {
    padding: 5px;
    background-color: #bbffb8;
    border: 1px solid #028f00;
+   text-align: center;
 }
 
 #status-error-box {
@@ -310,6 +324,44 @@ ul.matelist li a {
    padding: 5px;
    background-color: #ffb8b8;
    border: 1px solid #8f0000;
+   text-align: center;
+}
+
+/* @end */
+
+/* @group managerequests-page */
+
+#managerequests-page {
+   width: 1000px;
+   border-right: 1px solid #b2b2b2;
+   border-left: 1px solid #b1b1b1;
+   border-bottom: 2px solid #9f9f9f;
+   margin-left: auto;
+   margin-right: auto;
+   border-top: 1px solid #858585;
+   padding: 10px 10px 30px;
+}
+
+.managerequests-request {
+   padding: 10px;
+   border-top: 1px solid #a6a6a6;
+   height: 150px;
+}
+
+.managerequests-picture {
+   width: 150px;
+   vertical-align: middle;
+   margin-right: 10px;
+}
+
+.managerequests-buttons {
+   text-align: right;
+   float: right;
+   font-size: 15px;
+   height: 15px;
+   margin-top: 60px;
+   margin-bottom: auto;
+   display: block;
 }
 
 /* @end */

@@ -1,0 +1,11 @@
+<div id="managerequests-page">
+
+   <h1 id="managerequests-title">Manage Requests</h1>
+
+   <div id="status-<TMPL_VAR NAME="STATUS">-box">
+      <TMPL_VAR NAME="MESSAGE">
+   </div>
+
+   <TMPL_VAR NAME="REQUEST_LIST">
+
+</div>

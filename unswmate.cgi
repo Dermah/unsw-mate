@@ -24,10 +24,12 @@ sub action_create();
 sub action_verify();
 sub action_edit_user();
 sub action_request();
+sub action_manage_requests();
 sub get_profile_pic($);
 sub get_user_file($);
 sub does_user_exist($);
 sub get_user_file_hash($);
+sub write_hash_to_user($%);
 sub make_mate_list($);
 sub get_mate_url($);
 sub page_header(); 
@@ -41,14 +43,15 @@ $users_dir = "./users";
 $cookie_cache = "./cookies";
 $verify_dir = "./toverify";
 mkdir "$cookie_cache" if (!-d "$cookie_cache");
-$login_url = url()."?action=login";               #optional &username=
+$login_url = url()."?action=login";                     #optional &username=
 $create_url = url()."?action=create";
-$gallery_url = url()."?action=gallery&username="; #needs username
+$gallery_url = url()."?action=gallery&username=";       #needs username
 $edit_url = url()."?action=edit_user";
 $edit_gallery_url = url()."?action=edit_gallery";
 $delete_url = url()."?action=delete";
-$profile_url = url()."?action=see_user";          #optional &username=
-$request_url = url()."?action=request&user=";      #needs username
+$profile_url = url()."?action=see_user";                #optional &username=
+$request_url = url()."?action=request&user=";           #needs username
+$manage_requests_url = url()."?action=manage_requests";
 
 my %template_variables = (
    URL => url(),
@@ -672,7 +675,7 @@ sub action_edit_user() {
 
 sub action_request () {
    if (!$logged_in_user) {
-      $template_variables{MESSAGE} = "You must be logged in to sent a mate request";
+      $template_variables{MESSAGE} = "Please <a href=\"".$login_url."\">log in</a> to send mate requests";
       $template_variables{STATUS} = "error";
       return "status";
    } else {
@@ -696,15 +699,97 @@ sub action_request () {
          $template_variables{MESSAGE} = "You've already sent this user a friend request";
          $template_variables{STATUS} = "error";
          return "status";
+      } elsif (-r "$users_dir/$logged_in_user/requests/$user") {
+         $template_variables{MESSAGE} = "This user has already sent you a request. You can manage your friend requests <a href=\"".$manage_requests_url."\">here</a>";
+         $template_variables{STATUS} = "error";
+         return "status";
       } else {
          open $F, '>', "$users_dir/$user/requests/$logged_in_user" or die "Could not send request for some reason";
          print $F "request";
          close $F;
+
+         %mate_det = get_user_file_hash($user);
+
+         open E, '|-', 'mail', '-s', "Mate request from $logged_in_user", $mate_det{email} or die "Cant send email to $address";
+         print E "Hi there,\n\n";
+         print E "$logged_in_details{name} has sent you a Mate request on UNSW-Mate. Please use the linke below to accept or remove the request\n";
+         print E "$manage_requests_url\n\n";
+         print E "Thanks for using UNSW-Mate!";
+         close E;
+
          $template_variables{MESSAGE} = "Friend request sent";
          $template_variables{STATUS} = "success";
       }
    }
    return "status";
+}
+
+sub action_manage_requests () {
+   if (!$logged_in_user) {
+      $template_variables{MESSAGE} = "Please <a href=\"".$login_url."\">log in</a> to manage your friend requests";
+      $template_variables{STATUS} = "error";
+      return "status";
+   }
+   if (defined param('accept') or defined param('cancel')) {
+      if (param('accept') eq param('cancel')) {
+         $template_variables{MESSAGE} = "Don't do that";
+         $template_variables{STATUS} = "error";
+         return "status";
+      }
+      if (defined param('accept')) {
+         $to_accept = param('accept');
+         $to_accept =~ s/[^a-zA-Z0-9\-\_]//g;
+         if (!-r "$users_dir/$logged_in_user/requests/$to_accept") {
+            $template_variables{MESSAGE} = "You don't have a freind request from $to_accept";
+            $template_variables{STATUS} = "error";
+            return "status";
+         }
+         
+         my %details = get_user_file_hash($logged_in_user);
+         my $first_mate = "";
+         $first_mate = "\n" if ($details{mates} ne "");
+         $details{mates} .= $first_mate.$to_accept;
+         my %mate_det = get_user_file_hash($to_accept);
+         $first_mate = "";
+         $first_mate = "\n" if ($mate_det{mates} ne "");
+         $mate_det{mates} .= $first_mate.$logged_in_user;
+         write_hash_to_user($logged_in_user, %details);
+         write_hash_to_user($to_accept, %mate_det);
+
+         unlink("$users_dir/$logged_in_user/requests/$to_accept") or die "could not remove request";          
+
+         $template_variables{MESSAGE} = "Friend request accepted";
+         $template_variables{STATUS} = "success";
+      }
+      if (defined param('cancel')) {
+         $to_cancel = param('cancel');
+         $to_cancel =~ s/[^a-zA-Z0-9]//g;
+         if (!-r "$users_dir/$logged_in_user/requests/$to_cancel") {
+            $template_variables{MESSAGE} = "You don't have a freind request from $to_cancel";
+            $template_variables{STATUS} = "error";
+            return "status";
+         }
+         unlink("$users_dir/$logged_in_user/requests/$to_cancel") or die "could not remove request";
+         $template_variables{MESSAGE} = "Friend request cancelled";
+         $template_variables{STATUS} = "success";
+      }
+   }
+   
+
+   $template_variables{REQUEST_LIST} = "";
+   foreach $request (glob ("$users_dir/$logged_in_user/requests/*")) {
+      $request =~ s/$users_dir\/$logged_in_user\/requests\/([\w\_]+)/$1/;
+      if (does_user_exist($request)) {
+         %mate_det = get_user_file_hash($request) if (does_user_exist($request) ne "");
+         $template_variables{REQUEST_LIST} .= "<div class=\"managerequests-request\">";
+         $template_variables{REQUEST_LIST} .= "<img class=\"managerequests-picture\" src=\"".get_profile_pic($request)."\" /> <a href=\"".$profile_url."&username=$request\">".$mate_det{name}."</a> sent you a mate request";
+         $template_variables{REQUEST_LIST} .= "<span class=\"managerequests-buttons\"><b><a href=\"".$manage_requests_url."&accept=$request\">Accept</a></b> or <a href=\"".$manage_requests_url."&cancel=$request\">Cancel</a></span>";
+         $template_variables{REQUEST_LIST} .= "</div>" ;
+      }
+   }
+
+   return "manage_requests";
+
 }
 
 #
@@ -762,6 +847,23 @@ sub get_user_file_hash ($) {
    chomp $details{courses};
    chomp $details{mates};
    return %details;
+}
+
+#
+# Arg: username, details hash of username
+# Writes details hash to the users detail file
+#
+sub write_hash_to_user ($%) {
+   my ($username, %details) = @_;
+   open $USERFILE, '>', "$users_dir/$username/details.txt" or die "Could not create details file at $users_dir/$username/details.txt";
+   #format a hash for printing to details.txt
+   for my $key (keys %details) {
+      my @lines = split "\n", $details{$key};
+      my $line = "\t";
+      $line .= join "\n\t", @lines;
+      print $USERFILE "$key:\n$line\n";
+   }
+   close $USERFILE;         
 }
 
 #
@@ -859,13 +961,19 @@ sub setup_page_top_nav() {
    $header_variables{SCRIPT_URL} = url();
    
    $header_variables{LOGGED_IN_NAME} = "Login";
-   $header_variables{LOGGED_IN_NAME} = $logged_in_name if defined $logged_in_name;
+   $header_variables{REQ_VIS} = "collapse" if @requests == 0;
    
    if (defined $logged_in_user) {
+      @requests = glob("$users_dir/$logged_in_user/requests/*");
+      $header_variables{LOGGED_IN_NAME} = $logged_in_name if defined $logged_in_name;
+      $header_variables{REQUESTS} = @requests if @requests > 0;
+      $header_variables{REQ_VIS} = "visible" if @requests > 0;
+      $header_variables{MANAGE_REQUESTS_URL} = $manage_requests_url;
+      
       $header_variables{LOGGED_IN_URL} = get_mate_url($logged_in_user);
       $header_variables{PROFILE_PIC} = get_profile_pic($logged_in_user);
       $header_variables{LOGOUT_URL} = url()."?action=logout";
-      $header_variables{LOGOUT} = "Logout";
+      $header_variables{LOGOUT} = "Logout";      
    } else {
       $header_variables{LOGGED_IN_URL} = url()."?action=login";
       $header_variables{PROFILE_PIC} = "./nopicture.jpg";
