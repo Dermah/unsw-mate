@@ -23,6 +23,7 @@ sub action_delete();
 sub action_create();
 sub action_verify();
 sub action_edit_user();
+sub action_request();
 sub get_profile_pic($);
 sub get_user_file($);
 sub does_user_exist($);
@@ -47,6 +48,7 @@ $edit_url = url()."?action=edit_user";
 $edit_gallery_url = url()."?action=edit_gallery";
 $delete_url = url()."?action=delete";
 $profile_url = url()."?action=see_user";          #optional &username=
+$request_url = url()."?action=request&user=";      #needs username
 
 my %template_variables = (
    URL => url(),
@@ -138,6 +140,13 @@ sub action_see_user() {
    if ($logged_in_user eq $username) {
       $toolbar_variables{VISIBILITY} = "visible";
       $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".$edit_url."\">Edit Page</a></span><span id=\"toolbar-right\"><a href=\"".$delete_url."\">Delete Account</a></span>";
+   } elsif ($logged_in_user) {
+      $toolbar_variables{VISIBILITY} = "visible";
+      %logged_in_details = get_user_file_hash($logged_in_user);
+      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".$request_url.$username."\">Send Mate Request</a></span>";
+      foreach $mate (split "\n", $logged_in_details{mates}) {
+         $toolbar_variables{CONTENTS} = "You are mates with <b>$template_variables{NAME}</b>" if $username eq $mate;
+      }
    }
    
    my $about_me_file = "$users_dir/$username/about_me.txt";
@@ -659,6 +668,43 @@ sub action_edit_user() {
    $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".url()."?action=see_user&username=$logged_in_user\">Cancel</a></span><span id=\"toolbar-right\"><a href=\"".url()."?action=delete\"></a></span>";
 
    return "edit_user";
+}
+
+sub action_request () {
+   if (!$logged_in_user) {
+      $template_variables{MESSAGE} = "You must be logged in to sent a mate request";
+      $template_variables{STATUS} = "error";
+      return "status";
+   } else {
+      %logged_in_details = get_user_file_hash($logged_in_user);
+      foreach $mate (split "\n", $logged_in_details{mates}) {
+         if ($mate eq param('user')) {
+            $template_variables{MESSAGE} = "You are already mates with $mate";
+            $template_variables{STATUS} = "error";
+            return "status";
+         }
+      }
+      $user = param('user');
+      $user =~ s/[^a-zA-Z0-9\-\_]//g;
+      if (does_user_exist($user) ne "yes") {
+         $template_variables{MESSAGE} = "User $user does not exist";
+         $template_variables{STATUS} = "error";
+         return "status";
+      }
+      mkdir "$users_dir/$user/requests" if (!-d "$users_dir/$user/requests");
+      if (-r "$users_dir/$user/requests/$logged_in_user") {
+         $template_variables{MESSAGE} = "You've already sent this user a friend request";
+         $template_variables{STATUS} = "error";
+         return "status";
+      } else {
+         open $F, '>', "$users_dir/$user/requests/$logged_in_user" or die "Could not send request for some reason";
+         print $F "request";
+         close $F;
+         $template_variables{MESSAGE} = "Friend request sent";
+         $template_variables{STATUS} = "success";
+      }
+   }
+   return "status";
 }
 
 #
