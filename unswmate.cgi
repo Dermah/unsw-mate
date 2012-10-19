@@ -15,6 +15,7 @@ use File::Glob qw(:globally :nocase);
 
 sub action_see_user();
 sub action_gallery();
+sub action_edit_gallery();
 sub action_search();
 sub action_login();
 sub action_logout();
@@ -43,6 +44,7 @@ $login_url = url()."?action=login";               #optional &username=
 $create_url = url()."?action=create";
 $gallery_url = url()."?action=gallery&username="; #needs username
 $edit_url = url()."?action=edit_user";
+$edit_gallery_url = url()."?action=edit_gallery";
 $delete_url = url()."?action=delete";
 $profile_url = url()."?action=see_user";          #optional &username=
 
@@ -179,6 +181,77 @@ sub action_gallery () {
       $gallery_list .= "<img src=\"".$image."\" /> <br />\n";
    }
    $template_variables{GALLERY_THUMBS} = $gallery_list if ($gallery_list ne "");
+
+   #page and account editing toolbar
+   if ($logged_in_user eq $username) {
+      $toolbar_variables{VISIBILITY} = "visible";
+      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".$edit_gallery_url."\">Edit Gallery</a></span>";
+   }
+
+   return "gallery";
+}
+
+sub action_edit_gallery() {
+   if (!$logged_in_user) {
+      $template_variables{MESSAGE} = "You must be logged in to edit your gallery";
+      $template_variables{STATUS} = "error";
+      return "status";
+   }
+
+   my @gallery_files = glob("$users_dir/$logged_in_user/gallery*.jpg");
+   if (!@gallery_files) {
+      $new_location = "gallery00.jpg";
+   } else {
+      $new_location = $gallery_files[$#gallery_files];
+      $new_location =~ s/.*?gallery([0-9]+).jpg/$1/;
+      while (glob("$users_dir/$logged_in_user/gallery$new_location.jpg")) {
+         $new_location++;
+      }
+   }
+   
+   if (defined param('upload') and param('upload') eq "Upload" and param('filename') ne "") {
+      my $pic_filename = param('filename');
+      open PIC, '>', "$users_dir/$logged_in_user/gallery-temp.jpg";
+      print PIC $_ while <$pic_filename>;
+      close PIC;
+      system ("convert -resize 650x650 \"$users_dir/$logged_in_user/gallery-temp.jpg\" \"$users_dir/$logged_in_user/gallery$new_location.jpg\"");
+      unlink("$users_dir/$logged_in_user/gallery-temp.jpg");
+   }
+
+   if (defined param('delete')) {
+      $to_delete = param('delete');
+      $to_delete =~ s/[^0-9]//g;
+      if (-r "$users_dir/$logged_in_user/gallery$to_delete.jpg") {
+         unlink("$users_dir/$logged_in_user/gallery$to_delete.jpg");
+         $template_variables{MESSAGE} =  "Picture deleted successfully";
+         $template_variables{STATUS} = "success";
+      } else {
+         $template_variables{MESSAGE} = "That picture doesn't exist";
+         $template_variables{STATUS} = "error";
+      }
+   }
+
+   my @gallery_files = glob("$users_dir/$logged_in_user/gallery*.jpg");
+   %details = get_user_file_hash($logged_in_user);
+
+   $template_variables{NAME} .= $details{name};
+   $template_variables{PROFILE_PIC_URL} = get_profile_pic($logged_in_user);
+   $template_variables{PROFILE_URL} = $profile_url."&username=".$logged_in_user;
+   $template_variables{GALLERY_THUMBS} = "This user has no gallery pictures";
+
+   my $gallery_list = "";
+   for $image (@gallery_files) {
+      $img_no = $image;
+      $img_no =~ s/.*?gallery([0-9]+).jpg/$1/;
+      $gallery_list .= "<a href=\"".$edit_gallery_url."&delete=".$img_no."\"><img class=\"gallery-edit-delete\" src=\"cross.png\" /></a> Picutre no. $img_no <br/>\n";
+      $gallery_list .= "<img class=\"gallery-picture\" src=\"".$image."\" /> <br />\n";
+   }
+   $template_variables{GALLERY_THUMBS} = $gallery_list if ($gallery_list ne "");
+
+   #page and account editing toolbar
+   $toolbar_variables{VISIBILITY} = "visible";
+   $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".$gallery_url.$logged_in_user."\">Cancel</a></span>";
+
    return "gallery";
 }
 
@@ -492,12 +565,14 @@ sub action_edit_user() {
          return "status";
       }
 
-      my $pic_filename = param('filename');
-      open PIC, '>', "$users_dir/$logged_in_user/profile-temp.jpg";
-      print PIC $_ while <$pic_filename>;
-      close PIC; 
-      system ("convert -resize 250x250 \"$users_dir/$logged_in_user/profile-temp.jpg\" \"$users_dir/$logged_in_user/profile.jpg\"");
-      unlink("$users_dir/$logged_in_user/profile-temp.jpg");
+      if (param('filename') ne "") {
+         my $pic_filename = param('filename');
+         open PIC, '>', "$users_dir/$logged_in_user/profile-temp.jpg";
+         print PIC $_ while <$pic_filename>;
+         close PIC; 
+         system ("convert -resize 250x250 \"$users_dir/$logged_in_user/profile-temp.jpg\" \"$users_dir/$logged_in_user/profile.jpg\"");
+         unlink("$users_dir/$logged_in_user/profile-temp.jpg");
+      }
 
       $template_variables{MESSAGE} = "Your profile was successfully changed!";
       $template_variables{STATUS} = "success";

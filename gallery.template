@@ -1,5 +1,7 @@
 <div id="gallery-page">
-
+   <div id="status-<TMPL_VAR NAME="STATUS">-box">
+      <TMPL_VAR NAME="MESSAGE">
+   </div>
    <div id="gallery-2col">
       <div id="gallery-leftcol">
          <img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" />
@@ -13,6 +15,12 @@
       <div id="gallery-rightcol">
          <h2><TMPL_VAR NAME="NAME">'s Gallery</h2>
          <p>
+            <h3>Upload Picture</h3>
+            <form action="<TMPL_VAR NAME="URL">" method="POST" name="edit_gallery"  enctype="multipart/form-data">
+               <input type="hidden" name="action" value="edit_gallery" />
+               <input id="edit-profileupload" type="file" name="filename" /><input type="submit" name="upload" value="Upload" />
+            </form>
+            <h3>Delete Pictures</h3>
             <TMPL_VAR NAME="GALLERY_THUMBS">
          </p>
       </div>
