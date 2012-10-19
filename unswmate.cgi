@@ -231,7 +231,7 @@ sub action_edit_gallery() {
       }
    }
 
-   my @gallery_files = glob("$users_dir/$logged_in_user/gallery*.jpg");
+   @gallery_files = glob("$users_dir/$logged_in_user/gallery*.jpg");
    %details = get_user_file_hash($logged_in_user);
 
    $template_variables{NAME} .= $details{name};
@@ -345,6 +345,28 @@ sub action_delete() {
       my $hash = cookie('sessionID');
       $hash =~ s/[^a-zA-Z0-9]//g;
       if (-r "$cookie_cache/$hash.$logged_in_user") {
+         my %details = get_user_file_hash($logged_in_user);
+         my $mates = $details{mates};
+         my @mate_array = split "\n", $mates;
+         foreach $mate (@mate_array) {
+            my %mate_det = get_user_file_hash($mate);
+            @checking_mates = split "\n", $mate_det{mates};
+            $mate_det{mates} = "";
+            foreach $check_mate (@checking_mates) {
+               $mate_det{mates} .= $check_mate."\n" if $check_mate ne "$logged_in_user";
+            }
+            if (-r "$users_dir/$mate/details.txt") {
+               open $USERFILE, '>', "$users_dir/$mate/details.txt" or die "Could not create details file at $users_dir/$mate/details.txt";
+               #format a hash for printing to details.txt
+               for my $key (keys %mate_det) {
+                  my @lines = split "\n", $mate_det{$key};
+                  my $line = "\t";
+                  $line .= join "\n\t", @lines;
+                  print $USERFILE "$key:\n$line\n";
+               }
+               close $USERFILE;         
+            }
+         }
          my $removal = "$users_dir/$logged_in_user";
          remove_tree($removal) or die "Broke trying to remove user directory $removal";
          # NEED TO DELETE USER FROM MATES LISTS
@@ -354,6 +376,7 @@ sub action_delete() {
                     -VALUE => "",
                     -EXPIRES => '+0s'
                    );
+
          $template_variables{MESSAGE} = "Sorry to see you go. Your account has been deleted";
          $template_variables{VISIBILITY} = "collapse";
       } else {

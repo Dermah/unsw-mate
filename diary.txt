@@ -28,3 +28,4 @@
 19/10/2012 16:00-19:20 Lots of style changes and code fixes, code cleaned up to use hashes and bug fixes
 19/10/2012 19:30-20:15 More fixes, hash usage and cleanups
 19/10/2012 20:15-21:30 Gallery now supports upload and deletion of pictures
+19/10/2012 21:30-22:20 When a mate deletes their account they are deleted from their mates lists
