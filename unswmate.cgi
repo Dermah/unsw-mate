@@ -11,6 +11,7 @@ use List::Util qw/min max/;
 use Digest::MD5 qw/md5_hex/;
 use File::Path qw/remove_tree/;
 use File::Copy;
+use File::Glob qw(:globally :nocase);
 
 sub action_see_user();
 sub action_gallery();
@@ -23,6 +24,7 @@ sub action_verify();
 sub action_edit_user();
 sub get_profile_pic($);
 sub get_user_file($);
+sub does_user_exist($);
 sub get_user_file_hash($);
 sub make_mate_list($);
 sub get_mate_url($);
@@ -31,22 +33,27 @@ sub page_trailer();
 sub check_login();
 sub setup_page_top_nav();
 
-
-my %template_variables = (
-   URL => url(),
-   LOGIN_URL => url()."?action=login",
-   CREATE_URL => url()."?action=create",
-   TITLE => "UNSW-Mate",
-   CGI_PARAMS => join(",", map({"$_='".param($_)."'"} param())),
-   ERROR => "Unknown error"
-);
-
 # some globals used through the script
 $debug = 1;
 $users_dir = "./users";
 $cookie_cache = "./cookies";
 $verify_dir = "./toverify";
 mkdir "$cookie_cache" if (!-d "$cookie_cache");
+$login_url = url()."?action=login";               #optional &username=
+$create_url = url()."?action=create";
+$gallery_url = url()."?action=gallery&username="; #needs username
+$edit_url = url()."?action=edit_user";
+$delete_url = url()."?action=delete";
+$profile_url = url()."?action=see_user";          #optional &username=
+
+my %template_variables = (
+   URL => url(),
+   LOGIN_URL => $login_url,
+   CREATE_URL => $create_url,
+   TITLE => "UNSW-Mate",
+   CGI_PARAMS => join(",", map({"$_='".param($_)."'"} param())),
+   ERROR => "Unknown error"
+);
 
 check_login;
 setup_page_top_nav;
@@ -57,13 +64,13 @@ $action =~ s/[^a-zA-Z0-9\-_]//g if $action;
 # execute a perl function based on the CGI parameter 'action'
 $page = &{"action_$action"}() if $action && defined &{"action_$action"};
 # load HTML template from file based on $page value
+my $template = HTML::Template->new(filename => "$page.template", die_on_bad_params => 0);
 my $template_header = HTML::Template->new(filename => "header.template", die_on_bad_params => 0);
 my $template_toolbar = HTML::Template->new(filename => "toolbar.template", die_on_bad_params => 0);
-my $template = HTML::Template->new(filename => "$page.template", die_on_bad_params => 0);
 # put variables into the template
+$template->param(%template_variables);
 $template_header->param(%header_variables);
 $template_toolbar->param(%toolbar_variables);
-$template->param(%template_variables);
 
 # print start of HTML ASAP to assist debugging if there is an error in the script
 print page_header();
@@ -78,7 +85,6 @@ exit(0);
 
 sub action_see_user() {
    my $username = param('username');
-   $username =~ s/[^a-zA-Z0-9\-_]//g if $username;
    if (! $username) {
        # for the purposes of level 0 testing if no username is supplied
        # we select a random username
@@ -91,35 +97,35 @@ sub action_see_user() {
        $username = $users[rand @users];
        $username =~ s/.*\///;
    }
-   $template_variables{USERNAME} = $username;
-   $template_variables{MESSAGE} = "Could not find user $username";
-   $template_variables{STATUS} = "error";
+   $username =~ s/[^a-zA-Z0-9\-_]//g;
 
-   @user_file = get_user_file($username);
-
-   for my $elt (0..$#user_file) {
-      if ($user_file[$elt] =~ /^name:/) {
-         $template_variables{NAME} = $user_file[$elt+1];
-      } elsif ($user_file[$elt] =~ /^gender:/) {
-         my $gender = $user_file[$elt+1];
-         $gender =~ s/^\W*m/M/;
-         $gender =~ s/^\W*f/F/;
-         $template_variables{GENDER} = $gender;
-      } elsif ($user_file[$elt] =~ /^degree:/) {
-         $template_variables{DEGREE} = $user_file[$elt+1];
-      } elsif ($user_file[$elt] =~ /^courses:/) {
-         $offset = 1;
-         while ($user_file[$elt+$offset] =~ /\t/) {
-            $template_variables{COURSE_LIST} .= "<li>";
-            $line = $user_file[$elt+$offset];
-            $line =~ s/\t//;
-            $template_variables{COURSE_LIST} .= $line."</li>";
-            $offset++;
-         }
-      }
+   if (does_user_exist($username) ne "yes") {
+      $template_variables{MESSAGE} = "Could not find user $username";
+      $template_variables{STATUS} = "error";
+      return "status";
    }
+
+   $template_variables{USERNAME} = $username;
+   %details = get_user_file_hash($username);
+   
+   $template_variables{NAME} = $details{name};
+   my $gender = $details{gender};
+   $gender =~ s/^m/M/;
+   $gender =~ s/^f/F/;
+   $template_variables{GENDER} = $gender;
+   $template_variables{DEGREE} = $details{degree};
+   if ($details{courses} ne "") {
+      my @course_array = split "\n", $details{courses};
+      my $course_list = "<li>";
+      $course_list .= join "</li>\n<li>", @course_array;
+      $course_list .= "</li>";
+      $template_variables{COURSE_LIST} = $course_list;
+   } else {
+      $template_variables{COURSE_LIST} = "No courses completed";
+   }
+
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
-   $template_variables{GALLERY_URL} = url()."?action=gallery&username=".$username;
+   $template_variables{GALLERY_URL} = $gallery_url.$username;
    $template_variables{DETAILS} = pre($details);
    $template_variables{MATE_LIST} = join " ", make_mate_list($username);
    $template_variables{NUM_MATES} = make_mate_list($username);
@@ -127,7 +133,7 @@ sub action_see_user() {
    #page and account editing toolbar
    if ($logged_in_user eq $username) {
       $toolbar_variables{VISIBILITY} = "visible";
-      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".url()."?action=edit_user\">Edit Page</a></span><span id=\"toolbar-right\"><a href=\"".url()."?action=delete\">Delete Account</a></span>";
+      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".$edit_url."\">Edit Page</a></span><span id=\"toolbar-right\"><a href=\"".$delete_url."\">Delete Account</a></span>";
    }
    
    my $about_me_file = "$users_dir/$username/about_me.txt";
@@ -153,24 +159,31 @@ sub action_gallery () {
    $username =~ s/[^a-zA-Z0-9\-_]//g;
 
    if (!$username) {
-      die "Fake 403 Forbidden Error, no username specified for gallery";
+      $template_variables{MESSAGE} = "No gallery found, please try again";
+      $template_variables{STATUS} = "error";
+      return "status";
    }
 
+   %details = get_user_file_hash($username);
+
+   $template_variables{NAME} = $details{name};
    $template_variables{PROFILE_PIC_URL} = get_profile_pic($username);
-   $template_variables{PROFILE_URL} = url()."?action=see_user&username=".$username;
-   $template_variables{GALLERY_THUMBS} = "Error while accessing this mates gallery, please try again";
+   $template_variables{PROFILE_URL} = $profile_url."&username=".$username;
+   $template_variables{GALLERY_THUMBS} = "This user has no gallery pictures";
+
    my @gallery_files = glob("$users_dir/$username/gallery*.jpg");
    my $gallery_list = "";
    for $image (@gallery_files) {
       $gallery_list .= "<img src=\"".$image."\" /> <br />\n";
    }
-   $template_variables{GALLERY_THUMBS} = $gallery_list;
+   $template_variables{GALLERY_THUMBS} = $gallery_list if ($gallery_list ne "");
    return "gallery";
 }
 
 #
 # Searches user names, not actual names
 # May not handle spaces correctly yet
+# case insensitive
 #
 sub action_search () {
    $term = param('term');
@@ -182,8 +195,7 @@ sub action_search () {
       $username = $user_path;
       $username =~ s/$users_dir\/([\w_-]+)/$1/;
       $user = $username;
-      $user =~ s/_/ /g; 
-      $results .= "<li><a href=\"".url()."?action=see_user&username=$username\"><img class=\"matelist-pic\" src=\"".$user_path."/profile.jpg\" /></a> <a class=\"matelist-namelink\" href=\"".url()."?action=see_user&username=$username\">$user</a></li>\n";
+      $results .= "<li><a href=\"".$profile_url."&username=$username\"><img class=\"matelist-pic\" src=\"".$user_path."/profile.jpg\" /></a> <a href=\"".$profile_url."&username=".$username."\">$user</a></li>\n";
    }
 
    $template_variables{SEARCH_TERM} = $term;
@@ -196,22 +208,16 @@ sub action_login() {
    if (defined param('username') and defined param('password')) {
       my $username = param('username');
       $username =~ s/[^a-zA-Z0-9_-]//g;
-      my $user_file = "$users_dir/$username/details.txt";
       if ($username ne param('username')) {
          $template_variables{MESSAGE} = "Incorrect username or password";
          return "login";
-      } elsif (!-r "$user_file") {
+      } elsif (does_user_exist($username) eq "") {
          $template_variables{MESSAGE} = "Incorrect username or password";
       } else {
-         open DETAILS, "$user_file" or die "Error opening login files, please try again";
-         $line = "dummy:";
-         while ($line !~ /^password:/) {
-            $line = <DETAILS>;
-         }
-         $password = <DETAILS>;
-         chomp $password;
-         $password =~ s/\t(.+)$/$1/;
+         %details = get_user_file_hash($username);
+         $password = $details{password};
          if ($password eq param('password')) {
+            # Login successful, plants a cookie and redirects browser to home page
             $hash = md5_hex($username.localtime(time).rand());
             open my $H, '>', "$cookie_cache/$hash.$username" or die "Unable to create a cookie for you";
             print $H $hash.".".$username;
@@ -230,7 +236,6 @@ sub action_login() {
             $template_variables{MESSAGE} = "Incorrect username or password";
          }
       }
-      $password = param('password');
    } else {
       $template_variables{MESSAGE} = "Please enter your username and password below";
    }
@@ -241,30 +246,17 @@ sub action_logout() {
    if (defined cookie('sessionID')) {
       my $hash = cookie('sessionID');
       $hash =~ s/[^a-z0-9A-Z]//g;
-      if (-r "$cookie_cache/$hash.$logged_in_user") {
-         unlink("$cookie_cache/$hash.$logged_in_user");
-         $cookie = cookie(
-                    -NAME => 'sessionID',
-                    -VALUE => "",
-                    -EXPIRES => '+0s'
-                   );
-         print redirect(
-                  -URL => url(),
-                  -COOKIE => $cookie
-               );
-         exit 0;
-      } else {
-         $cookie = cookie(
-                    -NAME => 'sessionID',
-                    -VALUE => "",
-                    -EXPIRES => '+0s'
-                   );
-         print redirect(
-                  -URL => url(),
-                  -COOKIE => $cookie
-               );
-         exit 0;
-      }
+      unlink("$cookie_cache/$hash.$logged_in_user") if (-r "$cookie_cache/$hash.$logged_in_user");
+      $cookie = cookie(
+                 -NAME => 'sessionID',
+                 -VALUE => "",
+                 -EXPIRES => '+0s'
+                );
+      print redirect(
+               -URL => url(),
+               -COOKIE => $cookie
+            );
+      exit 0;
    } else {
       return "home_page";
    }
@@ -280,6 +272,7 @@ sub action_delete() {
       if (-r "$cookie_cache/$hash.$logged_in_user") {
          my $removal = "$users_dir/$logged_in_user";
          remove_tree($removal) or die "Broke trying to remove user directory $removal";
+         # NEED TO DELETE USER FROM MATES LISTS
          unlink("$cookie_cache/$hash.$logged_in_user");
          $cookie = cookie(
                     -NAME => 'sessionID',
@@ -289,7 +282,7 @@ sub action_delete() {
          $template_variables{MESSAGE} = "Sorry to see you go. Your account has been deleted";
          $template_variables{VISIBILITY} = "collapse";
       } else {
-         $template_variables{MESSAGE} = "Error deleting your account (you don't appear to be logged in)";
+         $template_variables{MESSAGE} = "Error deleting your account (you don't appear to be logged in, try logging out and back in)";
          $template_variables{VISIBILITY} = "collapse";
       }
    } else {
@@ -305,8 +298,12 @@ sub action_create() {
    $template_variables{FORM_EMAIL2} = param('email2');
    $template_variables{NAME} = param('name');
    $template_variables{DEGREE} = param('degree');
-   if ((param('username') eq "") or (param('password') eq "") or (param('password2') eq "") or (param('email') eq "") or (param('email2') eq "") or (param('name') eq "")) {
+   
+   if (!defined param('username')) {  
+      return "create";
+   } elsif ((param('username') eq "") or (param('password') eq "") or (param('password2') eq "") or (param('email') eq "") or (param('email2') eq "") or (param('name') eq "")) {
       $template_variables{MESSAGE} = "One or more of the fields below were empty, please try again";
+      $template_variables{STATUS} = "error";
       return "create";      
    }
 
@@ -314,6 +311,7 @@ sub action_create() {
    $username =~ s/[^a-zA-Z0-9\-_]//g;
    if ($username ne param('username')) {
       $template_variables{MESSAGE} = "Usernames may only have letters, numbers, hyphens and underscores in them. Please try again";
+      $template_variables{STATUS} = "error";
       return "create";
    }
    
@@ -321,34 +319,39 @@ sub action_create() {
    $name =~ s/[^a-zA-Z\- ]//g;
    if ((param('name') ne $name)) {
       $template_variables{MESSAGE} = "Names can currently only have letters, spaces and hyphens in them. Please try again";
-      return "create";
-   }
-   if (param('password') ne param('password2')) {
-      $template_variables{MESSAGE} = "The passwords you entered didn't match. Please try again";
+      $template_variables{STATUS} = "error";
       return "create";
    }
 
    $gender = param('gender');
    $gender =~ s/[^a-z]//g;
    $degree = param('degree');
-   $degree =~ s/[^a-zA-Z\/\-\_ ]//g;
+   $degree =~ s/[^a-zA-Z\/\-\_\(\)\[\]\&\! ]//g;
 
    $email = param('email');
    $email =~ s/[^a-zA-Z0-9\-_@\.\!\#\$\%\&\'\*\+\-\/\=\?\^_\`\{\|\}\~]//g;
    $template_variables{FORM_EMAIL} = $email;
    if ($email ne param('email')) {
       $template_variables{MESSAGE} = "We can't send mail to this email address, please try another one";
+      $template_variables{STATUS} = "error";
       return "create";
    } elsif ($email !~ /\w+\@\w+\.\w+/) {
       $template_variables{MESSAGE} = "Invalid email address, please try again";
+      $template_variables{STATUS} = "error";
       return "create";
    } elsif (param('email') ne param('email2')) {
       $template_variables{MESSAGE} = "The email addresses you entered did not match. Please try again";
+      $template_variables{STATUS} = "error";
       return "create";
    }
-
    if ((-r "$users_dir/$username") or (-r "$verify_dir/$username")) {
       $template_variables{MESSAGE} = "The username \"$username\" is already taken, please try another one";
+      $template_variables{STATUS} = "error";
+      return "create";
+   }
+   if (param('password') ne param('password2')) {
+      $template_variables{MESSAGE} = "The passwords you entered didn't match. Please try again";
+      $template_variables{STATUS} = "error";
       return "create";
    }
 
@@ -366,6 +369,8 @@ sub action_create() {
    print $H "\t".$gender."\n";
    print $H "degree:\n";
    print $H "\t".$degree."\n";
+   print $H "courses:\n";
+   print $H "\t\n";
    
    $verify_url = url()."?action=verify&key=$hash&user=$username";
 
@@ -376,7 +381,8 @@ sub action_create() {
    print F "If you didn't sign up to UNSW-Mate then please ignore this email";
    close F;
 
-   $template_variables{MESSAGE} = "A verification email has been sent to $email, your account wil be activated once you click the link within";
+   $template_variables{MESSAGE} = "A verification email has been sent to $email, your account will be activated once you click the link within";
+   $template_variables{STATUS} = "success";
    $template_variables{VISIBILITY} = "collapse";
 
    return "create";
@@ -400,7 +406,7 @@ sub action_verify() {
          $template_variables{STATUS} = "error";
          $template_variables{MESSAGE} = "No one has registered with the username \"$user\"";
          return "status";
-    }      
+      }      
    } else {
       $template_variables{STATUS} = "error";
       $template_variables{MESSAGE} = "An error has occured. Try copying and pasting the URL again";
@@ -430,8 +436,8 @@ sub action_edit_user() {
       $template_variables{STATUS} = "error";
       return "status";
    }
-   
-   if ((param('edit') eq "Save") or (defined param('del_course'))) {
+
+   if ((defined param('edit') and (param('edit') eq "Save")) or (defined param('del_course'))) {
       $template_variables{MESSAGE} = "You are attempting to edit your profile! Woo!";
       $template_variables{STATUS} = "success";
       
@@ -451,7 +457,9 @@ sub action_edit_user() {
 
       $details{gender} = param('gender') if param('gender') =~ /^.*\w+.*$/;
       $details{degree} = param('degree') if param('degree') =~ /^.*\w+.*$/;
-      $details{courses} .= "\n".param('new_course') if param('new_course') =~ /^.*\w+.*$/;
+      $not_first_course = "\n" if $details{courses} ne "";
+      $details{courses} .= $not_first_course.param('new_course') if param('new_course') =~ /^.*\w+.*$/;
+
       if (param('del_course')) {
           my @courses = split "\n", $details{courses};
           $details{courses} = "";
@@ -486,6 +494,14 @@ sub action_edit_user() {
          return "status";
       }
 
+      my $pic_filename = param('filename');
+      #my $pic_data = join("", <$pic_filename>);
+      open PIC, '>', "$users_dir/$logged_in_user/profile-temp.jpg";
+      print PIC $_ while <$pic_filename>;
+      close PIC; 
+      system ("convert -resize 250x250 \"$users_dir/$logged_in_user/profile-temp.jpg\" \"$users_dir/$logged_in_user/profile.jpg\"");
+      unlink("$users_dir/$logged_in_user/profile-temp.jpg");
+
       $template_variables{MESSAGE} = "Your profile was successfully changed!";
       $template_variables{STATUS} = "success";
    }
@@ -507,19 +523,22 @@ sub action_edit_user() {
    $template_variables{FEMALE_SEL} = "selected=\"selected\"" if $gender =~ /^Female$/;
    $template_variables{DEGREE} = $details{degree};
    chomp $template_variables{DEGREE};
-   $template_variables{COURSE_LIST} = $details{courses};
 
-   $del_num = 1;
-   my @course_array = split "\n", $template_variables{COURSE_LIST};
-   my $course = shift @course_array;
-   my $course_list = "<li>".$delete_html1.$del_num.$delete_html2." $course";
-   for $course (@course_array) {
-      $del_num++;
-      $course_list .= "</li>\n<li>".$delete_html1.$del_num.$delete_html2." $course";
+   if ($details{courses} ne "") {
+      $del_num = 1;
+      my @course_array = split "\n", $details{courses};
+      my $course = shift @course_array;
+      my $course_list = "<li>".$delete_html1.$del_num.$delete_html2." $course";
+      for $course (@course_array) {
+         $del_num++;
+         $course_list .= "</li>\n<li>".$delete_html1.$del_num.$delete_html2." $course";
+      }
+      $course_list .= "</li>";
+      $template_variables{COURSE_LIST} = $course_list;
+   } else {
+      $template_variables{COURSE_LIST} = "<li>No courses added</li>";
    }
-   $course_list .= "</li>";
-   $template_variables{COURSE_LIST} = $course_list;
-   
+
    my $about_me_file = "$users_dir/$logged_in_user/about_me.txt";
    
    if (-r $about_me_file) {
@@ -571,6 +590,13 @@ sub get_user_file ($) {
    $details = join '', <$p>;
    close $p;
    return split "\n", $details;
+}
+
+sub does_user_exist($) {
+   my ($username) = @_;
+   my $details_filename = "$users_dir/$username/details.txt";
+   return "yes" if (-r "$details_filename");
+   return "";
 }
 
 #

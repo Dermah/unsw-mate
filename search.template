@@ -1,6 +1,10 @@
 <div id="search-page">
 
-   <h1 id="search-title">UNSW-Mate</h1>
+   <h1 id="search-title">UNSW-Mate Search</h1>
+      <form method="GET" action="<TMPL_VAR NAME="URL">">
+         <input type="hidden" name="action" value="search" />
+         Perform another search: <input type="text" name="term" id="home-searchbox" /><br />
+      </form>
    <h2>Search Results for "<TMPL_VAR NAME="SEARCH_TERM">"</h2>
 
    <ul id="search-matelist">

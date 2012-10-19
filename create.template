@@ -1,8 +1,9 @@
 <div id="create-page">
+   <h1>Create a UNSW-Mate Account</h1>
    <div>
-      Please fill out the info below to get started on UNSW-Mate! A valid email address is required to use the site
+      Please fill out the info below to get started on UNSW-Mate! A valid email address is required to use the site.
    </div>
-   <div id="create-error">
+   <div id="status-<TMPL_VAR NAME="STATUS">-box">
       <TMPL_VAR NAME="MESSAGE">
    </div>
    <form id="create-form" method=POST action="<TMPL_VAR NAME="URL">" style="visibility:<TMPL_VAR NAME="VISIBILITY">">
@@ -14,7 +15,7 @@
       Password: <input type="password" name="password"><br />
       Password again: <input type="password" name="password2"><br />
       E-mail: <input type="text" name="email" value="<TMPL_VAR NAME="FORM_EMAIL">"><br />
-      E-mail again: <input type="text" name="email2"><br /> 
+      E-mail again: <input type="text" name="email2" value="<TMPL_VAR NAME="FORM_EMAIL2">"><br /> 
       <button type="submit">Create Account</button>
    </form>
 </div>

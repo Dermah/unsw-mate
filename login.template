@@ -9,7 +9,9 @@
    </script>
 
    <h1 id="login-title">Login to UNSW-Mate</h1>
-
+   <p>
+      If you don't have an account, <a href="<TMPL_VAR NAME="CREATE_URL">">click here</a> to create one.
+   </p>
    <p>
       <TMPL_VAR NAME="MESSAGE">
    </p>

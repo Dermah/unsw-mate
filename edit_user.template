@@ -2,19 +2,21 @@
    <div id="status-<TMPL_VAR NAME="STATUS">-box">
       <TMPL_VAR NAME="MESSAGE">
    </div>
-   <div id="edit-2col">
-      <div id="edit-leftcol">
-         <img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" />
-         <p>
-            <em>Links</em>
-            <ul>
-               <li><a href="<TMPL_VAR NAME="PROFILE_URL">">Cancel (back to profile)</a> 
-               <li><a href="<TMPL_VAR NAME="GALLERY_URL">">Gallery</a>
-            </ul>
-         </p>
-      </div>
-      <div id="edit-rightcol">
-         <form action="<TMPL_VAR NAME="URL">" method="POST" name="edit_user">
+   <form action="<TMPL_VAR NAME="URL">" method="POST" name="edit_user"  enctype="multipart/form-data">
+      <div id="edit-2col">
+         <div id="edit-leftcol">
+            <img src="<TMPL_VAR NAME="PROFILE_PIC_URL">" /> <br />
+            <h3>Upload Profile Picture</h3>
+            <input id="edit-profileupload" type="file" name="filename" />
+            <p>
+               <em>Links</em>
+               <ul>
+                  <li><a href="<TMPL_VAR NAME="PROFILE_URL">">Cancel (back to profile)</a> 
+                  <li><a href="<TMPL_VAR NAME="GALLERY_URL">">Gallery</a>
+               </ul>
+            </p>
+         </div>
+         <div id="edit-rightcol">
             <input type="hidden" name="action" value="edit_user">
             <h2><TMPL_VAR NAME="NAME"> <input type="submit" name="edit" value="Save" /></h2>
             <h3>User Info</h3>
@@ -28,18 +30,18 @@
                   <li>Gender: <select name="gender"><option value="male" <TMPL_VAR NAME="MALE_SEL">>Male</option><option value="female" <TMPL_VAR NAME="FEMALE_SEL">>Female</option></select></li>
                   <li>Degree: <input type="text" name="degree" value="<TMPL_VAR NAME="DEGREE">" /></li>
                   <li>Courses Completed (deleting courses saves changes):
-                      <ul>
+                     <ul>
                          <TMPL_VAR NAME="COURSE_LIST">
                          <li>Add A New Course: <input type="text" name="new_course" value="" /></li>
-                      </ul>
+                     </ul>
                   </li>
                </ul>
             </p>
-         </form>
-         <h3>Raw Details</h3>
-         <p>
-            <TMPL_VAR NAME="DETAILS">
-         </p>
+            <h3>Raw Details</h3>
+            <p>
+               <TMPL_VAR NAME="DETAILS">
+            </p>
+         </div>
       </div>
-   </div>
+   </form>
 </div>
