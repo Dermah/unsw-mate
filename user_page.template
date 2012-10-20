@@ -34,10 +34,6 @@
             <TMPL_VAR NAME="MATE_LIST">
          </ul>
 
-         <h3>Raw Details</h3>
-         <p>
-            <TMPL_VAR NAME="DETAILS">
-         </p>
       </div>
    </div>
 </div>

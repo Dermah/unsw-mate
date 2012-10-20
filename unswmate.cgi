@@ -38,7 +38,7 @@ sub check_login();
 sub setup_page_top_nav();
 
 # some globals used through the script
-$debug = 1;
+$debug = 0;
 $users_dir = "./users";
 $cookie_cache = "./cookies";
 $verify_dir = "./toverify";
@@ -115,7 +115,6 @@ sub action_see_user() {
    }
 
    $template_variables{USERNAME} = $username;
-   @user_details = get_user_file($username);
    %details = get_user_file_hash($username);
    
    $template_variables{NAME} = $details{name};
@@ -141,7 +140,7 @@ sub action_see_user() {
    $template_variables{NUM_MATES} = make_mate_list($username)/2;
 
    #page and account editing toolbar
-   if ($logged_in_user eq $username) {
+   if (defined $logged_in_user and $logged_in_user eq $username) {
       $toolbar_variables{VISIBILITY} = "visible";
       $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".$edit_url."\">Edit Page</a> | <a href=\"".$finder_url."\">Mate Finder</a></span><span id=\"toolbar-right\"><a href=\"".$delete_url."\">Delete Account</a></span>";
    } elsif ($logged_in_user) {

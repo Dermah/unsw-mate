@@ -34,3 +34,4 @@
 20/10/2012 08:30-09:30 Users now recieve an email about mate requests, manage requests page now shows requests
 20/10/2012 09:30-10:30 Users can now accept or reject mate requests and a little notification appears in their header when they have a request
 20/10/2012 10:30-12:00 Fully functioning friend finder that checks course matches and mates of mates
+20/10/2012 12:00-12:45 Fixes and cleanups
