@@ -211,6 +211,15 @@ sub action_edit_gallery() {
       return "status";
    }
 
+   if ($logged_in_user) {
+      $template_variables{EDIT_STUFF} = "<h3>Upload Picture</h3>";
+      $template_variables{EDIT_STUFF} .= "<form action=\"".url()."\" method=\"POST\" name=\"edit_gallery\"  enctype=\"multipart/form-data\">";
+      $template_variables{EDIT_STUFF} .= "<input type=\"hidden\" name=\"action\" value=\"edit_gallery\" />";
+      $template_variables{EDIT_STUFF} .= "<input id=\"edit-profileupload\" type=\"file\" name=\"filename\" /><input type=\"submit\" name=\"upload\" value=\"Upload\" />";
+      $template_variables{EDIT_STUFF} .= "</form>";
+      $template_variables{EDIT_STUFF} .= "<h3>Delete Pictures</h3>";
+   }
+
    my @gallery_files = glob("$users_dir/$logged_in_user/gallery*.jpg");
    if (!@gallery_files) {
       $new_location = "gallery00.jpg";

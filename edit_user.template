@@ -33,7 +33,8 @@
                   <li>Courses Completed (deleting courses saves changes):
                      <ul>
                          <TMPL_VAR NAME="COURSE_LIST">
-                         <li>Add A New Course: <input type="text" name="new_course" value="" /></li>
+                         <li>Add A New Course: <input type="text" name="new_course" value="" /><br />
+                            Usually in format: Year Session CourseCode (e.g. 2012 S2 COMP2041)</li>
                      </ul>
                   </li>
                </ul>
