@@ -1,0 +1,17 @@
+<div id="finder-page">
+
+   <h1 id="finder-title">Mate Finder</h1>
+
+   <div id="status-<TMPL_VAR NAME="STATUS">-box">
+      <TMPL_VAR NAME="MESSAGE">
+   </div>
+   
+   <p>
+      <TMPL_VAR NAME="NEXT_LINK"><br />
+      You are connected in some way to these people on UNSW-Mate: 
+   </p>
+
+   <TMPL_VAR NAME="KNOW_LIST">
+   <TMPL_VAR NAME="NEXT_LINK">
+
+</div>

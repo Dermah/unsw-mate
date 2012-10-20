@@ -52,6 +52,7 @@ $delete_url = url()."?action=delete";
 $profile_url = url()."?action=see_user";                #optional &username=
 $request_url = url()."?action=request&user=";           #needs username
 $manage_requests_url = url()."?action=manage_requests";
+$finder_url = url()."?action=finder";                    #optional &start=
 
 my %template_variables = (
    URL => url(),
@@ -142,7 +143,7 @@ sub action_see_user() {
    #page and account editing toolbar
    if ($logged_in_user eq $username) {
       $toolbar_variables{VISIBILITY} = "visible";
-      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".$edit_url."\">Edit Page</a></span><span id=\"toolbar-right\"><a href=\"".$delete_url."\">Delete Account</a></span>";
+      $toolbar_variables{CONTENTS} = "<span id=\"toolbar-left\"><a href=\"".$edit_url."\">Edit Page</a> | <a href=\"".$finder_url."\">Mate Finder</a></span><span id=\"toolbar-right\"><a href=\"".$delete_url."\">Delete Account</a></span>";
    } elsif ($logged_in_user) {
       $toolbar_variables{VISIBILITY} = "visible";
       %logged_in_details = get_user_file_hash($logged_in_user);
@@ -777,7 +778,8 @@ sub action_manage_requests () {
    
 
    $template_variables{REQUEST_LIST} = "";
-   foreach $request (glob ("$users_dir/$logged_in_user/requests/*")) {
+   @requests = glob ("$users_dir/$logged_in_user/requests/*");
+   foreach $request (@requests) {
       $request =~ s/$users_dir\/$logged_in_user\/requests\/([\w\_]+)/$1/;
       if (does_user_exist($request)) {
          %mate_det = get_user_file_hash($request) if (does_user_exist($request) ne "");
@@ -788,7 +790,68 @@ sub action_manage_requests () {
       }
    }
 
+   if (@requests == 0) {
+      $template_variables{REQUEST_LIST} = "You have no mate requests";
+      $header_variables{REQ_VIS} = "hidden";
+   }
    return "manage_requests";
+}
+
+sub action_finder () {
+   if (!$logged_in_user) {
+      $template_variables{MESSAGE} = "<a href=\"".$login_url."\">Log in</a> to find potential friends";
+      $template_variables{STATUS} = "error";
+      return "status";
+   }
+
+   foreach my $user (glob ("$users_dir/*")) {
+      $user =~ s/$users_dir\/([a-zA-Z0-9\-\_]+)/$1/;
+      my %user_det = get_user_file_hash($user);
+      my @users_courses = (split "\n", $user_det{courses});
+      foreach my $course (@users_courses) {
+         $courses{$course}{$user} = "completed";
+      }
+   }
+
+   my %details = get_user_file_hash($logged_in_user);
+   foreach my $course (split "\n", $details{courses}) {  
+      $you_may_know{$_}++ foreach keys %{$courses{$course}};
+   }
+
+   foreach my $mate (split "\n", $details{mates}) {
+      my %mate_det = get_user_file_hash($mate);
+      $you_may_know{$_}++ foreach (split "\n", $mate_det{mates});
+   }
+
+   $highest_rating = 0;
+   foreach my $key (keys %you_may_know) {
+      $highest_rating = $you_may_know{$key} if ($highest_rating < $you_may_know{$key});
+      $you_may_know{$key} = 0 if $key eq $logged_in_user;
+   }
+
+   $counter = 0;
+   foreach $rating (0..$highest_rating-1) {
+      foreach $user (keys %you_may_know) {
+         push @knowing_array, $user if $you_may_know{$user} == $highest_rating-$rating;
+      }
+   }
+
+   $min = 0 if !defined param('start');
+   $min = param('start') if defined param('start');
+   $min =~ s/[^0-9]//g;
+   $up_to = 0;
+   foreach $num ($min..($min+9)) {
+      last if $num > $#knowing_array;
+      %mate_det = get_user_file_hash($knowing_array[$num]) if (does_user_exist($knowing_array[$num]) ne "");
+      $template_variables{KNOW_LIST} .= "<div class=\"finder-entry\">";
+      $template_variables{KNOW_LIST} .= "<img class=\"finder-picture\" src=\"".get_profile_pic($knowing_array[$num])."\" /> <a href=\"".$profile_url."&username=$knowing_array[$num]\">".$mate_det{name}."</a>";
+      $template_variables{KNOW_LIST} .= " ($you_may_know{$knowing_array[$num]} mate and course connections)";
+      $template_variables{KNOW_LIST} .= "</div>";
+      $up_to = $num +1;
+   }
+   $template_variables{NEXT_LINK} = "<a class=\"finder-nextlink\" href=\"".$finder_url."&start=$up_to\">Next 10 &gt;&gt;</a>" if $up_to < $#knowing_array;
+
+   return "finder";
 
 }
 
